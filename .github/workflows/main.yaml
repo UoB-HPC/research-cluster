@@ -1,0 +1,236 @@
+name: CI
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Clear default packages
+        run: |
+          set -xe
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /opt/hostedtoolcache/
+          sudo rm -rf /usr/local/graalvm/
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo docker image prune --all --force
+
+          APT_PARAMS='sudo apt -y -qq -o=Dpkg::Use-Pty=0'
+          $APT_PARAMS remove -y '^dotnet-.*'
+          $APT_PARAMS remove -y '^llvm-.*'
+          $APT_PARAMS remove -y '^php.*'
+          $APT_PARAMS remove -y '^mongodb-.*'
+          $APT_PARAMS remove -y '^mysql-.*'
+          $APT_PARAMS remove -y azure-cli google-* google-chrome-stable firefox mono-devel libgl1-mesa-dri
+          $APT_PARAMS autoremove --purge -y
+          $APT_PARAMS autoclean
+          $APT_PARAMS clean
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Enable zram
+        run: |
+          sudo swapoff -a
+          sudo rm -f /mnt/swapfile
+          sudo apt-get install -y util-linux zram-config linux-modules-extra-$(uname -r)
+
+          sudo modprobe zram
+
+          totalmem=`LC_ALL=C free | grep -e "^Mem:" | sed -e 's/^Mem: *//' -e 's/  *.*//'`
+          mem=$((totalmem * 4 * 1024)) 
+
+          sudo sh -c "echo $mem > /sys/block/zram0/disksize"
+          sudo mkswap /dev/zram0
+          sudo swapon -p 5 /dev/zram0
+          sudo zramctl
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        if: always()
+
+      - name: Enable KVM group perms # See https://github.com/actions/runner-images/issues/7670
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update
+          sudo apt-get install -y --no-install-suggests libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu-system-x86 qemu-system-aarch64
+          sudo usermod -a -G kvm,libvirt $USER
+        if: always()
+
+      - name: Generate keys
+        run: ssh-keygen -t ed25519 -N "" -f $HOME/.ssh/id_ed25519
+        if: always()
+
+      ################
+
+      - name: Install dependencies
+        run: sudo apt-get install -y cloud-utils libvirt-dev debootstrap
+        if: always()
+
+      - name: Install packer and vagrant
+        run: |
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt-get update -y
+          sudo apt-get install -y packer vagrant
+        if: always()
+
+      - name: Setup vagrant plugin and binfmt
+        run: |
+          vagrant plugin install vagrant-libvirt
+          sudo apt-get reinstall -y qemu-user-static
+          pipx inject ansible-core passlib
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Create opnsense image
+        working-directory: images
+        run: make opnsense.qcow2
+        if: always()
+
+      - name: Build x86_64 bos/cos images
+        working-directory: images
+        run: make bos.x86_64.qcow2  cos.x86_64.warewulf.tar -j
+        if: always()
+
+      - name: Build aarch64 bos/cos images
+        working-directory: images
+        run: make bos.aarch64.qcow2 cos.aarch64.warewulf.tar -j
+        if: always()
+
+      - name: Image stats
+        working-directory: images
+        run: tree --du -h
+        if: always()
+
+      - name: Clean up image
+        working-directory: images
+        run: rm -rf *.iso AlmaLinux*.qcow2 output-*
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run setup-tests
+        run: ./nspawn.sh setup-tests
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run build
+        run: sudo ./nspawn.sh build
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run mkfs
+        run: sudo ./nspawn.sh mkfs
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision
+        run: sudo ./nspawn.sh provision
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run boot
+        run: sudo ./nspawn.sh boot
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-vm-router
+        run: ./nspawn.sh run-play playbook-vm-router.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-vm-idm
+        run: ./nspawn.sh run-play playbook-vm-idm.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-vm-mgmt
+        run: ./nspawn.sh run-play playbook-vm-mgmt.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-vm-login
+        run: ./nspawn.sh run-play playbook-vm-login.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-svc-idm
+        run: ./nspawn.sh run-play playbook-svc-idm.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-svc-mgmt
+        run: ./nspawn.sh run-play playbook-svc-mgmt.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-task-sync-images
+        run: ./nspawn.sh run-play playbook-task-sync-images.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-task-sync-nodes
+        run: ./nspawn.sh run-play playbook-task-sync-nodes.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-task-sync-users
+        run: ./nspawn.sh run-play playbook-task-sync-users.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-svc-login
+        run: ./nspawn.sh run-play playbook-svc-login.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-vm-compute
+        run: ./nspawn.sh run-play playbook-vm-compute.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-task-tests
+        run: ./nspawn.sh run-play playbook-task-tests.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run provision playbook-all
+        run: ./nspawn.sh run-play playbook-all.yml
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
+
+      - name: Run poweroff
+        run: ./nspawn.sh poweroff
+        if: always()
+
+      - { name: Stats, run: df -H && sudo fstrim -av, if: always() }

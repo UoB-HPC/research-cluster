@@ -1,0 +1,46 @@
+# See https://github.com/warewulf/warewulf-node-images/blob/main/rockylinux-9/Containerfile-fixed
+ARG COS_RELEASE
+FROM docker.io/library/almalinux:${COS_RELEASE} AS cos.base.${COS_RELEASE}
+ARG PACKAGES
+
+ENV PACKAGES=${PACKAGES}
+
+COPY ./cos-provision.sh /
+RUN chmod +x /cos-provision.sh && /cos-provision.sh && rm -rf /cos-provision.sh
+
+# Patch up munge key permissions after overlay and before munge starts
+COPY patch-munge-key.service /etc/systemd/system/patch-munge-key.service
+
+# Domain join just before slurm starts so that all jobs will have storage and user
+COPY ipa-add-host.service /etc/systemd/system/ipa-add-host.service
+
+# Setup services
+RUN systemctl enable ipa-add-host patch-munge-key munge slurmd && \
+    sed -i '/After=network.target/a After=wwclient.target' /usr/lib/systemd/system/munge.service
+
+RUN mkdir -p /etc/warewulf/
+
+# Warewulf default excludes
+RUN echo "/boot/" > /etc/warewulf/excludes && \
+    echo "/usr/share/GeoIP" >> /etc/warewulf/excludes
+
+# Warewulf exit scripts
+RUN echo "#!/bin/sh" > /etc/warewulf/container_exit.sh && \
+    echo "export LANG=C LC_CTYPE=C" >> /etc/warewulf/container_exit.sh && \
+    echo "set -x" >> /etc/warewulf/container_exit.sh && \
+    echo "dnf clean" >> /etc/warewulf/container_exit.sh
+
+# Extract vmlinuz for aarch64 if compressed
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "aarch64" ]; then \
+        cd /usr/lib/modules/*.aarch64 && \
+        if file vmlinuz | grep -q 'gzip compressed data'; then \
+            echo "vmlinuz is gzip compressed, decompressing..." && \
+            mv vmlinuz vmlinux.gz && \
+            gunzip vmlinux.gz; \
+        fi; \
+    fi
+
+# RUN dnf clean all
+
+CMD ["/bin/echo", "-e", "For Warewulf provisioning only, do not run"]
