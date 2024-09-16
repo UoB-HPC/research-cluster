@@ -49,7 +49,8 @@ module Staging
       arch_to_dns_map: {
         x86_64: 'amd64',
         aarch64: 'arm64'
-      }
+      },
+      disk_format: 'qcow2'
     }
   end
 
@@ -63,8 +64,7 @@ module Staging
     pve_vars = {
       pve_username: 'root@pam',
       pve_password: 'vagrant',
-      pve_node: 'pve',
-      pve_ip: pve_ip
+      pve_node: 'pve'
     }
     router_node_vars = {
       router_host: 'router',
@@ -72,6 +72,9 @@ module Staging
       router_disk_size: '6G',
       router_mem_gb: 2,
       router_ncores: 4,
+      router_inet_wan: 'vmbr0',
+      router_inet_lan: 'vmbr1',
+      router_inet_mgmt: 'vmbr2',
       router_ip: '10.10.10.10',
       router_mgmt_ip: '10.10.20.1',
       router_mgmt_dhcp_start: '10.10.20.2',
@@ -98,6 +101,9 @@ module Staging
       mgmt_ncores: 4,
       mgmt_sshkeys: ssh_keys,
       mgmt_rds_disk: '/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_rds1',
+      mgmt_rds_part: '/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_rds1-part1',
+      mgmt_rds_fstype: 'xfs',
+      mgmt_rds_opts: 'uquota',
       mgmt_ip: '10.10.10.102',
       # following are only used for warewulf config generation
       mgmt_netmask: '255.255.0.0',

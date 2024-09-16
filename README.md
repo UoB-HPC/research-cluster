@@ -135,7 +135,6 @@ ungrouped:
     pve_username: root@pam
     pve_password: vagrant
     pve_node: pve
-    pve_ip: <YOUR_UNIQUE_IP_ADDR_FOR_PVE_LAN_ONLY>
     router_host: router
     router_password: <YOUR_PASSWORD>
     router_disk_size: 6G

@@ -31,12 +31,12 @@
         cores: "{{router_ncores}}"
         memory: "{{1024 * router_mem_gb}}"
         net:
-          net0: "virtio,bridge=vmbr0"
-          net1: "virtio,bridge=vmbr1"
-          net2: "virtio,bridge=vmbr2"
+          net0: "virtio,bridge={{router_inet_wan}}"
+          net1: "virtio,bridge={{router_inet_lan}}"
+          net2: "virtio,bridge={{router_inet_mgmt}}"
         scsihw: "virtio-scsi-single"
         scsi:
-          scsi0: "{{storage_pool}}:0,import-from=/var/lib/vz/template/opnsense.amd64.{{router_disk_size}}.qcow2,format=qcow2,cache=none,ssd=1,discard=on"
+          scsi0: "{{storage_pool}}:0,import-from=/var/lib/vz/template/opnsense.amd64.{{router_disk_size}}.qcow2,format={{disk_format}},cache=none,ssd=1,discard=on"
 
     - include_tasks: tasks/pve_vm_state.yml
       vars: { vm_name: "router.{{domain}}", vm_state: started }
