@@ -5,8 +5,12 @@ dnf install -y epel-release dnf-plugins-core
 dnf install -y "https://repos.openhpc.community/OpenHPC/3/EL_9/$(arch)/ohpc-release-3-1.el9.$(arch).rpm"
 dnf config-manager --set-enabled crb
 dnf copr enable cyqsimon/micro -y
-dnf update -y
 
+rpm --import "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"
+dnf install -y "https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm"
+
+dnf update -y
+dnf install -y --enablerepo=elrepo-kernel kernel-ml kernel-ml-modules
 dnf install -y --allowerasing --setopt=install_weak_deps=False \
     dnf-automatic /bin/mailx ${PACKAGES}
 
