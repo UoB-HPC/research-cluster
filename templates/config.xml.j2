@@ -219,6 +219,7 @@
       <scope>system</scope>
       <groupname>admins</groupname>
       <password>{{router_password|password_hash('blowfish')}}</password>
+      <authorizedkeys>{{router_sshkeys|b64encode}}</authorizedkeys>
       <uid>0</uid>
     </user>
     <nextuid>2000</nextuid>
@@ -259,6 +260,7 @@
       <keysig/>
       <enabled>enabled</enabled>
       <permitrootlogin>1</permitrootlogin>
+      <passwordauth>1</passwordauth>
     </ssh>
     <rrdbackup>-1</rrdbackup>
     <netflowbackup>-1</netflowbackup>

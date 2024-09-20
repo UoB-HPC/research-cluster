@@ -1,0 +1,14 @@
+{% for node, vars in nodes.items() %}
+host {{node}} {
+  hardware ethernet {{vars.mgmt_mac}};
+  fixed-address {{vars.mgmt_ip}};
+}
+{% endfor %}
+
+
+{% for node, vars in unmanaged_nodes|default({}).items() %}
+host {{node}} {
+  hardware ethernet {{vars.mgmt_mac}};
+  fixed-address {{vars.mgmt_ip}};
+}
+{% endfor %}

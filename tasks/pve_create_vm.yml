@@ -10,8 +10,8 @@
     cpu: "host"
     name: "{{vm_name}}"
     sockets: 1
-    cores: "{{vm_cores}}"
-    memory: "{{1024 * vm_mem_gb}}"
+    cores: "{{vm_cores|int}}"
+    memory: "{{1024 * (vm_mem_gb|int)}}"
     net: "{{vm_net}}"
     scsihw: "virtio-scsi-pci"
     sata:

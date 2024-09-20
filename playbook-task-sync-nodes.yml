@@ -53,3 +53,15 @@
         name: warewulfd
         state: restarted
         enabled: true
+
+- name: Sync mgmt reservations
+  hosts: "router.{{domain}}"
+  become: true
+
+  tasks:
+    - name: Upload ISC DHCP reservations
+      template:
+        src: mgmt-reservation.conf.j2
+        dest: /usr/local/etc/dhcpd.opnsense.d/mgmt-reservation.conf
+    - name: Restart ISC DHCP service
+      shell: pluginctl -s dhcpd restart

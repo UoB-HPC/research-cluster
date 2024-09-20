@@ -174,10 +174,16 @@ ungrouped:
     mgmt_cluster_name: staging
     login_message_of_the_day: <YOUR_MOTD>
     login_password: <YOUR_PASSWORD>
-    login_disk_size: 10G
-    login_mem_gb: 2
-    login_ncores: 6
     login_sshkeys: <YOUR_KEYS>
+    login_disk_size_from_arch_map:
+      x86_64: 10G
+      aarch64: 10G
+    login_mem_gb_from_arch_map:
+      x86_64: 2
+      aarch64: 2
+    login_ncores_from_arch_map:
+      x86_64: 4
+      aarch64: 4
     login_ip_from_arch_map:
       x86_64: "10.70.50.103"
       aarch64: "10.70.50.104"

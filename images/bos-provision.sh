@@ -10,7 +10,7 @@ rpm --import "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"
 dnf install -y "https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm"
 
 dnf update -y
-dnf install -y --enablerepo=elrepo-kernel kernel-ml kernel-ml-modules
+dnf install -y --enablerepo=elrepo-kernel kernel-ml kernel-ml-modules kernel-ml-devel
 dnf install -y --allowerasing --setopt=install_weak_deps=False \
     dnf-automatic /bin/mailx ${PACKAGES}
 

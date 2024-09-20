@@ -1,0 +1,12 @@
+#cloud-config
+hostname: {{vm_name|split('.')|first}}
+manage_etc_hosts: true
+fqdn: {{vm_name}}
+user: {{vm_user}}
+disable_root: false
+password: {{vm_password}}
+ssh_authorized_keys:
+  - {{vm_sshkeys}}
+chpasswd:
+  expire: false
+package_upgrade: true

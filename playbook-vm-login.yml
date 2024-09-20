@@ -13,13 +13,13 @@
     - name: Copy login BOS image
       ansible.builtin.copy:
         src: /var/lib/vz/template/bos.{{item}}.qcow2
-        dest: "/var/lib/vz/template/bos.{{item}}.{{login_disk_size}}.qcow2"
+        dest: "/var/lib/vz/template/bos.{{item}}.{{login_disk_size_from_arch_map[item]}}.qcow2"
         force: false
         remote_src: true
       loop: [x86_64, aarch64]
 
     - name: Resize login image
-      ansible.builtin.shell: "qemu-img resize bos.{{item}}.{{login_disk_size}}.qcow2 {{login_disk_size}}"
+      ansible.builtin.shell: "qemu-img resize bos.{{item}}.{{login_disk_size_from_arch_map[item]}}.qcow2 {{login_disk_size_from_arch_map[item]}}"
       args:
         chdir: /var/lib/vz/template/
       loop: [x86_64, aarch64]
@@ -33,24 +33,45 @@
     - include_tasks: tasks/pve_create_vm.yml
       vars:
         vm_name: "login-{{arch_to_dns_map[item]}}.{{domain}}"
-        vm_cores: "{{login_ncores}}"
-        vm_mem_gb: "{{login_mem_gb}}"
+        vm_cores: "{{login_ncores_from_arch_map[item]}}"
+        vm_mem_gb: "{{login_mem_gb_from_arch_map[item]}}"
         vm_sshkeys: "{{login_sshkeys | regex_replace('\\\\n', '\n')}}"
         vm_user: "root"
         vm_password: "{{login_password}}"
-        vm_ip: "{{login_ip_from_arch_map[item]}}"
         vm_nameservers: "{{router_ip}}"
         vm_ipconfig:
           ipconfig0: "gw={{router_ip}},ip={{login_ip_from_arch_map[item]}}/24"
         vm_net:
           net0: "virtio,bridge=vmbr1"
         vm_scsi:
-          scsi0: "{{storage_pool}}:0,import-from=/var/lib/vz/template/bos.{{item}}.{{login_disk_size}}.qcow2,format={{disk_format}},cache=none,ssd=1,discard=on"
+          scsi0: "{{storage_pool}}:0,import-from=/var/lib/vz/template/bos.{{item}}.{{login_disk_size_from_arch_map[item]}}.qcow2,format={{disk_format}},cache=none,ssd=1,discard=on"
       loop: [x86_64, aarch64]
+      when: login_type_from_arch_map[item].split('@')[0] == "pve"
+
+    - include_tasks: tasks/virt_create_vm.yml
+      vars:
+        virt_host: "{{login_type_from_arch_map[item].split('@')[1]}}"
+        vm_name: "login-{{arch_to_dns_map[item]}}.{{domain}}"
+        vm_arch: "{{item}}"
+        vm_cores: "{{login_ncores_from_arch_map[item]}}"
+        vm_mem_gb: "{{login_mem_gb_from_arch_map[item]}}"
+        vm_sshkeys: "{{login_sshkeys | regex_replace('\\\\n', '\n')}}"
+        vm_user: "root"
+        vm_password: "{{login_password}}"
+        vm_nameservers: "{{router_ip}}"
+        vm_gw: "{{router_ip}}"
+        vm_ip: "{{login_ip_from_arch_map[item]}}"
+        vm_netmask: "255.255.255.0"
+        vm_iface: virbr0
+        vm_disk: "images/bos.{{item}}.qcow2"
+        vm_disk_size: "{{login_disk_size_from_arch_map[item]}}"
+      loop: [x86_64, aarch64]
+      when: login_type_from_arch_map[item].split('@')[0] == "virt"
 
     - name: Patch up aarch64 login nodes
       ansible.builtin.script:
         cmd: "scripts/patch-pve-aarch64.sh login-{{arch_to_dns_map['aarch64']}}.{{domain}}"
+      when: login_type_from_arch_map['aarch64'].split('@')[0] == "pve"
 
     - include_tasks: tasks/pve_vm_state.yml
       vars:

@@ -1,0 +1,48 @@
+- name: "Create Virt VM: {{vm_name}} CI image"
+  template:
+    src: "{{ci_entry.src}}"
+    dest: "/tmp/{{ci_entry.dest}}"
+  loop_control: { loop_var: ci_entry }
+  loop:
+    - { src: "ci-virt-meta-data.yml.j2", dest: "meta-data" }
+    - { src: "ci-virt-user-data.yml.j2", dest: "user-data" }
+    - { src: "ci-virt-network-config.yml.j2", dest: "network-config" }
+  delegate_to: localhost
+  become: false
+
+- name: "Create Virt VM: cloud-localds for {{vm_name}}"
+  command: >
+    cloud-localds /tmp/{{vm_name}}-ci.iso
+    /tmp/user-data
+    /tmp/meta-data  
+     --network-config /tmp/network-config
+  delegate_to: localhost
+  become: false
+
+- name: "Create Virt VM: Copy {{vm_name}} CI image"
+  ansible.builtin.copy:
+    src: "/tmp/{{vm_name}}-ci.iso"
+    dest: "/var/lib/libvirt/images/{{vm_name}}-ci.iso"
+  delegate_to: "{{virt_host}}"
+
+- name: "Create Virt VM: Copy {{vm_name}} disk image"
+  ansible.builtin.copy:
+    src: "{{vm_disk}}"
+    dest: "/var/lib/libvirt/images/{{vm_name}}.qcow2"
+  delegate_to: "{{virt_host}}"
+
+- name: "Create Virt VM: Resize {{vm_name}} disk image"
+  ansible.builtin.shell: "qemu-img resize /var/lib/libvirt/images/{{vm_name}}.qcow2 {{vm_disk_size}}"
+  delegate_to: "{{virt_host}}"
+
+- name: "Create Virt VM: Create domain {{vm_name}}"
+  community.libvirt.virt:
+    command: define
+    xml: "{{lookup('template', 'virt-template-{{vm_arch}}.xml.j2')}}"
+  delegate_to: "{{virt_host}}"
+
+- name: "Create Virt VM: Start domain {{vm_name}}"
+  community.libvirt.virt:
+    name: "{{vm_name}}"
+    state: running
+  delegate_to: "{{virt_host}}"

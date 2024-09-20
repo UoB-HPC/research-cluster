@@ -35,8 +35,8 @@ PACKAGES = micro \
 		   zsh \
 		   wireguard-tools dnf-automatic systemd-oomd lsb-release cryptsetup firewalld qemu-guest-agent coreutils e2fsprogs \
 		   java-17-openjdk-headless bash-completion git wget curl rclone rsync \
-		   htop lsof net-tools traceroute iproute ethtool \
-		   emacs-nox vim nano tree parallel tmux screen file which words ripgrep \
+		   htop lsof net-tools traceroute tcpdump iproute ethtool \
+		   emacs-nox vim nano tree moreutils parallel tmux screen file which words ripgrep \
 		   usbutils pciutils lm_sensors hwloc numactl ltrace strace perf valgrind
 
 space := $(subst ,, )

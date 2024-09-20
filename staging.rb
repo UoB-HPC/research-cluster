@@ -46,6 +46,7 @@ module Staging
       srun_port_range: '60001-65000',
       storage_pool: storage_pool,
       ssh_private_key: SSH_PRIVATE_KEY,
+      delete_templates: true,
       arch_to_dns_map: {
         x86_64: 'amd64',
         aarch64: 'arm64'
@@ -69,6 +70,7 @@ module Staging
     router_node_vars = {
       router_host: 'router',
       router_password: test_password,
+      router_sshkeys: ssh_keys,
       router_disk_size: '6G',
       router_mem_gb: 2,
       router_ncores: 4,
@@ -85,10 +87,10 @@ module Staging
     idm_node_vars = {
       idm_host: 'idm',
       idm_password: test_password,
+      idm_sshkeys: ssh_keys,
       idm_disk_size: '10G',
       idm_mem_gb: 4,
       idm_ncores: 4,
-      idm_sshkeys: ssh_keys,
       idm_ip: '10.10.10.101',
       ipa_password: test_password,
       idm_default_group: 'cluster-user'
@@ -96,20 +98,20 @@ module Staging
     mgmt_node_vars = {
       mgmt_host: 'mgmt',
       mgmt_password: test_password,
+      mgmt_sshkeys: ssh_keys,
       mgmt_disk_size: '24G',
       mgmt_mem_gb: 2,
       mgmt_ncores: 4,
-      mgmt_sshkeys: ssh_keys,
       mgmt_rds_disk: '/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_rds1',
       mgmt_rds_part: '/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_rds1-part1',
       mgmt_rds_fstype: 'xfs',
       mgmt_rds_opts: 'uquota',
       mgmt_ip: '10.10.10.102',
       # following are only used for warewulf config generation
-      mgmt_netmask: '255.255.0.0',
-      mgmt_network: '10.10.0.0',
-      mgmt_compute_dhcp_start: '10.10.10.210',
-      mgmt_compute_dhcp_end: '10.10.10.250',
+      mgmt_netmask: '255.255.255.0',
+      mgmt_network: '10.10.10.0',
+      mgmt_compute_dhcp_start: '10.10.10.150',
+      mgmt_compute_dhcp_end: '10.10.10.254',
       mgmt_webhook_port: '808',
       mgmt_exported_directories: %w[home shared],
       mgmt_cluster_name: 'staging'
@@ -117,20 +119,35 @@ module Staging
     login_node_vars = {
       login_message_of_the_day: 'Login node MOTD',
       login_password: test_password,
-      login_disk_size: '10G',
-      login_mem_gb: 2,
-      login_ncores: 4,
       login_sshkeys: ssh_keys,
+      login_disk_size_from_arch_map: {
+        x86_64: '10G',
+        aarch64: '10G'
+      },
+      login_ncores_from_arch_map: {
+        x86_64: 4,
+        aarch64: 4
+      },
+      login_mem_gb_from_arch_map: {
+        x86_64: 2,
+        aarch64: 2
+      },
       login_ip_from_arch_map: {
         x86_64: '10.10.10.103',
         aarch64: '10.10.10.104'
+      },
+      login_type_from_arch_map: {
+        x86_64: 'pve@localhost',
+        aarch64: 'pve@localhost'
       }
     }
 
     compute_nodes = {
       "compute0.#{DOMAIN}": {
-        ip: '10.10.10.220',
+        ip: '10.10.10.150',
         mac: 'BC:24:11:79:07:78',
+        mgmt_ip: '10.10.20.150',
+        mgmt_mac: 'BC:24:11:79:08:78',
         pve: 'host',
         image: 'cos_x86_64',
         overlays: %w[wwinit generic arch-x86_64],
@@ -138,12 +155,14 @@ module Staging
         threads_per_core: 1,
         cores_per_socket: 2,
         pve_disk_size: '1G',
-        pve_mem_gb: 9, # Otherwise iPXE runs out of memory decompressing initramfs
+        pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
         pve_ncores: 2
       },
       "compute1.#{DOMAIN}": {
-        ip: '10.10.10.221',
+        ip: '10.10.10.151',
         mac: 'BC:24:11:79:07:79',
+        mgmt_ip: '10.10.20.151',
+        mgmt_mac: 'BC:24:11:79:08:79',
         pve: 'aarch64',
         image: 'cos_aarch64',
         overlays: %w[wwinit generic arch-aarch64],
@@ -151,7 +170,7 @@ module Staging
         threads_per_core: 1,
         cores_per_socket: 2,
         pve_disk_size: '1G',
-        pve_mem_gb: 9, # Otherwise iPXE runs out of memory decompressing initramfs
+        pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
         pve_ncores: 2
       }
     }

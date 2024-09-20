@@ -1,0 +1,13 @@
+version: 1
+config:
+    - type: physical
+      name: eth0
+      mac_address: '{{"FF"|community.general.random_mac}}'
+      subnets:
+      - type: static
+        address: '{{vm_ip}}'
+        netmask: '{{vm_netmask}}'
+        gateway: '{{vm_gw}}'
+    - type: nameserver
+      address:
+      - '{{vm_nameservers}}'
