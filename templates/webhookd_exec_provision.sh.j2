@@ -4,6 +4,9 @@ set -eu
 # shellcheck disable=SC2154
 PAM_USER="$user"
 HOME_DIR="/mnt/rds1/home/$PAM_USER"
+
+kinit -kt /etc/root.keytab root
+
 if [ -d "$HOME_DIR" ]; then
     logger "$0: Request received for user $PAM_USER with existing homedir: $HOME_DIR; skipping..."
 elif ipa user-find --login="$user" --in-groups="{{idm_default_group}}" >/dev/null 2>&1; then

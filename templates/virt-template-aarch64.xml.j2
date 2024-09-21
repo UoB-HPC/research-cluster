@@ -45,6 +45,7 @@
     <controller type="scsi" index="0" model="virtio-scsi"/>
     <interface type="bridge">
       <source bridge="{{vm_iface}}"/>
+      <mac address="{{vm_mac}}"/>
       <model type="virtio"/>
     </interface>
     <console type="pty"/>

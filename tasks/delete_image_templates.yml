@@ -1,13 +1,13 @@
-- name: Find tempaltes
+- name: Find templates
   ansible.builtin.find:
     paths: "/var/lib/vz/template/"
     patterns: "*.qcow2"
   register: qcow2_templates
-  when: "{{delete_templates}}"
+  when: delete_templates|bool == true
 
 - name: Delete templates
   ansible.builtin.file:
     path: "{{item.path}}"
     state: absent
   with_items: "{{qcow2_templates.files}}"
-  when: "{{delete_templates}}"
+  when: delete_templates|bool == true

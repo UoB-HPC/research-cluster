@@ -2,7 +2,7 @@ version: 1
 config:
     - type: physical
       name: eth0
-      mac_address: '{{"FF"|community.general.random_mac}}'
+      mac_address: '{{vm_mac}}'
       subnets:
       - type: static
         address: '{{vm_ip}}'

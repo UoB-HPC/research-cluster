@@ -9,6 +9,8 @@ HOST="$host"
 # shellcheck disable=SC2154
 REGISTER_DNS="$register_dns"
 
+kinit -kt /etc/root.keytab root
+
 logger "$0: Registering host $HOST.{{domain}}"
 
 if [ "$REGISTER_DNS" = "true" ]; then

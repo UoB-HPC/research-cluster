@@ -1,3 +1,7 @@
+- name: "Create Virt VM: Generate MAC for {{vm_name}}"
+  set_fact:
+    "vm_mac": "{{'54'|community.general.random_mac}}"
+
 - name: "Create Virt VM: {{vm_name}} CI image"
   template:
     src: "{{ci_entry.src}}"
@@ -39,6 +43,12 @@
   community.libvirt.virt:
     command: define
     xml: "{{lookup('template', 'virt-template-{{vm_arch}}.xml.j2')}}"
+  delegate_to: "{{virt_host}}"
+
+- name: "Create Virt VM: Enable autostart for {{vm_name}}"
+  community.libvirt.virt:
+    name: "{{vm_name}}"
+    autostart: true
   delegate_to: "{{virt_host}}"
 
 - name: "Create Virt VM: Start domain {{vm_name}}"

@@ -1,12 +1,13 @@
 {% for node, vars in nodes.items() %}
+  {% if vars.mgmt_mac is defined and vars.mgmt_ip is defined %}
 host {{node}} {
   hardware ethernet {{vars.mgmt_mac}};
   fixed-address {{vars.mgmt_ip}};
 }
+  {% endif %}
 {% endfor %}
 
-
-{% for node, vars in unmanaged_nodes|default({}).items() %}
+{% for node, vars in (unmanaged_nodes|default({})).items() %}
 host {{node}} {
   hardware ethernet {{vars.mgmt_mac}};
   fixed-address {{vars.mgmt_ip}};

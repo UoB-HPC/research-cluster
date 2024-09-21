@@ -233,16 +233,34 @@
 
     ### rds1 NFS ###
 
-    - name: Get Kerberos ticket
-      ansible.builtin.shell: "kinit admin <<< {{ipa_password}}"
+    - name: Get fresh Kerberos ticket
+      ansible.builtin.shell: "kdestroy && kinit admin <<< {{ipa_password}}"
 
     - name: Ensure IPA service is present
       freeipa.ansible_freeipa.ipaservice:
         ipaadmin_password: "{{ipa_password}}"
         name: "nfs/mgmt.{{domain}}"
 
-    - name: Get IPA keytab
+    - name: Get IPA keytab for NFS
       ansible.builtin.shell: "ipa-getkeytab -s idm.{{domain}} -p nfs/mgmt.{{domain}} -k /etc/krb5.keytab"
+
+    - name: Get fresh Kerberos ticket
+      ansible.builtin.shell: "kdestroy && kinit admin <<< {{ipa_password}}"
+
+    - name: Drop existing root user keytab
+      ansible.builtin.file:
+        state: absent
+        path: /etc/root.keytab
+
+    - name: Create root user keytab
+      ansible.builtin.expect:
+        command: ktutil
+        responses:
+          ktutil:
+            - "addent -password -p root -k 1 -f"
+            - "wkt /etc/root.keytab"
+            - "quit"
+          Password(.*): "{{ipa_password}}"
 
     - name: Ensure default automount locations are present
       freeipa.ansible_freeipa.ipaautomountlocation:
@@ -275,7 +293,7 @@
         state: present
       loop: "{{mgmt_exported_directories}}"
 
-    - include_tasks: tasks/ipa_client_automount.yml
+    # - include_tasks: tasks/ipa_client_automount.yml
 
     ### webhookd ###
 
