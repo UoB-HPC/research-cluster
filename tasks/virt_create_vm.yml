@@ -23,6 +23,12 @@
   delegate_to: localhost
   become: false
 
+# *-swtpm.log prevents the machine from booting if the SE context is from a previous destroyed VM
+- name: "Create Virt VM: Clear existimg {{vm_name}} swtpm log"
+  ansible.builtin.file:
+    state: absent
+    path: "/var/log/swtpm/libvirt/qemu/{{vm_name}}-swtpm.log"
+
 - name: "Create Virt VM: Copy {{vm_name}} CI image"
   ansible.builtin.copy:
     src: "/tmp/{{vm_name}}-ci.iso"

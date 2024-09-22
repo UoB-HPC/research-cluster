@@ -12,7 +12,7 @@ dnf install -y "https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm"
 dnf update -y
 dnf install -y --enablerepo=elrepo-kernel kernel-ml kernel-ml-modules kernel-ml-devel
 dnf install -y --allowerasing --setopt=install_weak_deps=False \
-    dnf-automatic /bin/mailx ${PACKAGES}
+    podman perl /bin/mailx ${PACKAGES}
 
 dnf groupinstall 'Development Tools' --setopt=group_package_types=mandatory -y
 
