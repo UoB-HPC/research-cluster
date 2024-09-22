@@ -5,14 +5,14 @@
   tasks:
     - name: Copy COS image
       ansible.builtin.copy:
-        src: "images/cos.{{item}}.warewulf.tar"
-        dest: "/root/cos.{{item}}.warewulf.tar"
+        src: "images/cos.plain.{{item}}.warewulf.tar"
+        dest: "/root/cos.plain.{{item}}.warewulf.tar"
       loop: "{{all_arch}}"
 
     - name: Import COS image
       ansible.builtin.shell: | # XXX the first import sometime fails (!)
-        wwctl container import "/root/cos.{{item}}.warewulf.tar" "cos_{{item}}" --force --syncuser || \
-        wwctl container import "/root/cos.{{item}}.warewulf.tar" "cos_{{item}}" --force --syncuser
+        wwctl container import "/root/cos.plain.{{item}}.warewulf.tar" "cos_plain.{{item}}" --force --syncuser || \
+        wwctl container import "/root/cos.plain.{{item}}.warewulf.tar" "cos_plain.{{item}}" --force --syncuser
       loop: "{{all_arch}}"
       async: 600
       poll: 0

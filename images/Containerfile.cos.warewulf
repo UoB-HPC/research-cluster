@@ -2,8 +2,10 @@
 ARG COS_RELEASE
 FROM docker.io/library/almalinux:${COS_RELEASE} AS cos.base.${COS_RELEASE}
 ARG PACKAGES
+ARG VARIANT
 
 ENV PACKAGES=${PACKAGES}
+ENV VARIANT=${VARIANT}
 
 COPY ./cos-provision.sh /
 RUN chmod +x /cos-provision.sh && /cos-provision.sh && rm -rf /cos-provision.sh

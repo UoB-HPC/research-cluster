@@ -34,10 +34,10 @@ opnsense.qcow2: OPNsense-$(OPNSENSE_VERSION)-dvd-amd64.iso opnsense.pkr.hcl
 PACKAGES = micro \
 		   zsh \
 		   wireguard-tools dnf-automatic systemd-oomd lsb-release cryptsetup firewalld qemu-guest-agent coreutils e2fsprogs \
-		   java-17-openjdk-headless bash-completion git wget curl rclone rsync \
+		   java-17-openjdk-headless bash-completion git cmake wget curl rclone rsync \
 		   htop lsof net-tools traceroute tcpdump iproute ethtool \
 		   emacs-nox vim nano tree moreutils parallel tmux screen file which words ripgrep \
-		   usbutils pciutils lm_sensors hwloc numactl ltrace strace perf valgrind
+		   usbutils pciutils lm_sensors hwloc numactl psmisc ltrace strace perf valgrind
 
 space := $(subst ,, )
 comma := ,
@@ -78,14 +78,17 @@ cos.%.qcow2: AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA
 	  almalinux.pkr.hcl
 	mv output-cos."$*"/$@ "$@"
 
+VARIANT ?= plain
+
 # Builds a warewulf uncompressed VNFS template of COS with warewulf patches
 cos.%.warewulf.tar: Containerfile.cos.warewulf cos-provision.sh
 	podman build --security-opt label=disable --no-cache \
 		--build-arg PACKAGES="$(PACKAGES)" \
+		--build-arg VARIANT="$(VARIANT)" \
 		--build-arg COS_RELEASE="$(ALMA_VERSION)" \
 		--platform "linux/$*" \
-		-f Containerfile.cos.warewulf -t "warewulf_cos_$*"
-	podman save "warewulf_cos_$*" >cos.$*.warewulf.tar
+		-f Containerfile.cos.warewulf -t "warewulf_cos_$(VARIANT)_$*"
+	podman save "warewulf_cos_$(VARIANT)_$*" >cos.$(VARIANT).$*.warewulf.tar
 
 # Builds a uncompressed RAW format of COS (the size of match the size of the disk)
 cos.%.raw: cos.%.qcow2
