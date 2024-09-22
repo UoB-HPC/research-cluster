@@ -4,11 +4,12 @@
 
   pre_tasks:
     - include_tasks: tasks/setup_backup_dir.yml
+    - include_tasks: tasks/backup_or_restore_host_keys.yml
     - include_tasks: tasks/setup_unattended_security_updates.yml
 
     - name: Setup missing Slurm dependencies
       ansible.builtin.dnf:
-        name: ["/bin/mailx"]
+        name: ["/bin/mailx", "Lmod"]
 
   roles:
     - role: linux-system-roles.postfix
@@ -50,6 +51,7 @@
       openhpc_packages: []
       openhpc_slurm_partitions:
         - name: dummy # empty partition causes slurm to stall, we'll delete this partition later to make slurm start
+      openhpc_module_system_install: false
 
     - role: freeipa.ansible_freeipa.ipaclient
       state: present
@@ -280,7 +282,7 @@
         ipaadmin_password: "{{ipa_password}}"
         name: auto.rds1
         location: default
-        mount: "/nfs"
+        mount: "/-"
         state: present
 
     - name: Create rds1 mount keys
@@ -288,7 +290,7 @@
         ipaadmin_password: "{{ipa_password}}"
         location: default
         mapname: auto.rds1
-        key: "{{item}}" # points to /nfs/{{item}}
+        key: "/{{item}}"
         info: "mgmt.{{domain}}:/mnt/rds1/{{item}}"
         state: present
       loop: "{{mgmt_exported_directories}}"

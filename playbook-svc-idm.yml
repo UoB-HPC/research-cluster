@@ -52,7 +52,7 @@
         ipaadmin_password: "{{ipa_password}}"
         defaultgroup: "{{idm_default_group}}"
         defaultshell: /bin/bash
-        homedirectory: /nfs/home
+        homedirectory: /home
 
     - name: Trim
       ansible.builtin.shell: fstrim -av

@@ -7,6 +7,10 @@
     - include_tasks: tasks/backup_or_restore_host_keys.yml
     - include_tasks: tasks/setup_unattended_security_updates.yml
 
+    - name: Setup missing Slurm dependencies
+      ansible.builtin.dnf:
+        name: ["/bin/mailx", "Lmod"]
+
     - name: Setup motd
       ansible.builtin.copy:
         content: "{{login_message_of_the_day}}"
@@ -30,6 +34,11 @@
         state: enabled
         permanent: true
 
+    - name: Remove stale CA from past IPA joins
+      ansible.builtin.file:
+        state: absent
+        path: /etc/ipa/ca.crt
+
   roles:
     - role: linux-system-roles.postfix
       postfix_conf: { relayhost: "{{postfix_smtp_relay}}" }
@@ -47,6 +56,7 @@
       openhpc_slurm_service_enabled: true
       openhpc_login_only_nodes: "{{inventory_hostname}}"
       openhpc_cluster_name: "{{mgmt_cluster_name}}"
+      openhpc_module_system_install: false
 
     - role: freeipa.ansible_freeipa.ipaclient
       state: present

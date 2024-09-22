@@ -2,10 +2,21 @@
   ansible.builtin.shell: pwd
   register: dir
 
-- ansible.builtin.fail:
+- name: Assert home dir path is correct
+  ansible.builtin.fail:
     msg: "Bad home dir path"
   when:
-    - dir.rc != 0 or dir.stdout.strip() != "/nfs/home/" + ansible_user
+    - dir.rc != 0 or dir.stdout.strip() != "/home/" + ansible_user
+
+- name: Get df
+  ansible.builtin.shell: df
+  register: df
+
+- name: Assert mountpoint is correct
+  ansible.builtin.fail:
+    msg: "Missing mount in df"
+  when:
+    - df.rc != 0 or  'mgmt.{{domain}}:/mnt/rds1/home' not in df.stdout
 
 - name: Get srun node hostnames
   ansible.builtin.shell: srun --nodelist={{node}} hostname

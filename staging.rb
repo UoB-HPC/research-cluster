@@ -113,7 +113,7 @@ module Staging
       mgmt_compute_dhcp_start: '10.10.10.150',
       mgmt_compute_dhcp_end: '10.10.10.254',
       mgmt_webhook_port: '808',
-      mgmt_exported_directories: %w[home shared],
+      mgmt_exported_directories: %w[home shared opt],
       mgmt_cluster_name: 'staging'
     }
     login_node_vars = {
