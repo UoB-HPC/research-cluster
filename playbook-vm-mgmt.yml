@@ -44,7 +44,7 @@
         vm_name: "mgmt.{{domain}}"
         vm_cores: "{{mgmt_ncores}}"
         vm_mem_gb: "{{mgmt_mem_gb}}"
-        vm_sshkeys: "{{mgmt_sshkeys | regex_replace('\\\\n', '\n')}}"
+        vm_sshkeys: "{{mgmt_sshkeys}}"
         vm_user: "root"
         vm_password: "{{mgmt_password}}"
         vm_nameservers: "{{router_ip}}"

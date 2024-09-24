@@ -24,7 +24,7 @@
         vm_name: "idm.{{domain}}"
         vm_cores: "{{idm_ncores}}"
         vm_mem_gb: "{{idm_mem_gb}}"
-        vm_sshkeys: "{{idm_sshkeys | regex_replace('\\\\n', '\n')}}"
+        vm_sshkeys: "{{idm_sshkeys}}"
         vm_user: "root"
         vm_password: "{{idm_password}}"
         vm_nameservers: "{{router_ip}}"

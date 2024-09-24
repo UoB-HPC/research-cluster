@@ -30,7 +30,7 @@ RUN echo "/boot/" > /etc/warewulf/excludes && \
 RUN echo "#!/bin/sh" > /etc/warewulf/container_exit.sh && \
     echo "export LANG=C LC_CTYPE=C" >> /etc/warewulf/container_exit.sh && \
     echo "set -x" >> /etc/warewulf/container_exit.sh && \
-    echo "dnf clean" >> /etc/warewulf/container_exit.sh
+    echo "dnf clean all" >> /etc/warewulf/container_exit.sh
 
 # Extract vmlinuz for aarch64 if compressed
 RUN arch=$(uname -m) && \
@@ -43,6 +43,10 @@ RUN arch=$(uname -m) && \
         fi; \
     fi
 
-# RUN dnf clean all
+# Restore getty 
+RUN systemctl unmask getty.target
+
+# Clean up
+RUN dnf clean all
 
 CMD ["/bin/echo", "-e", "For Warewulf provisioning only, do not run"]

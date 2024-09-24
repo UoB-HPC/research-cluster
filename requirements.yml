@@ -2,6 +2,9 @@ roles:
   - name: geerlingguy.mysql
     version: "4.3.4"
 
+  - name: geerlingguy.nginx
+    version: "3.2.0"
+
   - name: stackhpc.openhpc
     version: "v0.26.0"
 

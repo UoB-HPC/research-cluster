@@ -6,7 +6,7 @@ user: {{vm_user}}
 disable_root: false
 password: {{vm_password}}
 ssh_authorized_keys:
-{% for item in vm_sshkeys.split('\n') %}
+{% for item in vm_sshkeys %}
   - {{item|trim}}
 {% endfor %}
 chpasswd:

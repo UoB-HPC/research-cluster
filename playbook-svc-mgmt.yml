@@ -11,7 +11,80 @@
       ansible.builtin.dnf:
         name: ["/bin/mailx", "Lmod"]
 
+    - name: Create /etc/webhookd dir
+      ansible.builtin.file:
+        state: directory
+        path: /etc/webhookd
+        mode: 755
+
+    - name: Generate webhookd privatekeys
+      community.crypto.openssl_privatekey:
+        path: "/etc/webhookd/{{item}}.key"
+        mode: 600
+      loop: [server, client]
+
+    - name: Create CSR for new certificate
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "/etc/webhookd/{{item}}.key"
+        use_common_name_for_san: false
+        common_name: local CA
+        subject_alt_name:
+          - "DNS:mgmt.{{domain}}"
+          - "DNS:{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+      register: csr
+      loop: [server, client]
+
+    - name: Generate webhookd publickeys
+      community.crypto.x509_certificate:
+        privatekey_path: "/etc/webhookd/{{item.item}}.key"
+        path: "/etc/webhookd/{{item.item}}.pem"
+        csr_content: "{{item.csr}}"
+        provider: selfsigned
+        selfsigned_not_after: "+3650d"
+        mode: 644
+      loop: "{{csr.results}}"
+
+    - name: Fetch webhookd keypairs
+      ansible.builtin.fetch:
+        flat: true
+        src: "/etc/webhookd/{{item}}"
+        dest: "{{host_backup_directory}}/{{item}}"
+      loop: [server.pem, server.key, client.pem, client.key]
+
+    - name: Allow binding webhook port in SELinux
+      community.general.seport:
+        ports: "{{mgmt_webhook_port}}"
+        proto: tcp
+        setype: http_port_t
+        state: present
+
+    - name: Allow network for httpd
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
+
   roles:
+    - role: geerlingguy.nginx
+      nginx_vhosts:
+        - listen: "{{mgmt_webhook_port}} ssl"
+          server_name: "webhook"
+          state: "present"
+          index: "/"
+          extra_parameters: |
+            location / {
+                proxy_pass http://127.0.0.1:8080; # webhookd defaults to this port
+            }
+            ssl_protocols       TLSv1.1 TLSv1.2;
+            ssl_ciphers         HIGH:!aNULL:!MD5;
+            ssl_session_cache   shared:SSL:10m;
+            ssl_session_timeout 10m;
+
+            ssl_certificate /etc/webhookd/server.pem;
+            ssl_certificate_key /etc/webhookd/server.key;
+            ssl_client_certificate /etc/webhookd/client.pem;
+            ssl_verify_client on;
+
     - role: linux-system-roles.postfix
       postfix_conf: { relayhost: "{{postfix_smtp_relay}}" }
 
@@ -65,6 +138,12 @@
 
   post_tasks:
     ### Update slurm nodes ###
+
+    - name: Copy setup oh-my-tmux script
+      ansible.builtin.copy:
+        src: scripts/setup-oh-my-tmux.sh
+        dest: /root/setup-oh-my-tmux.sh
+        mode: 755
 
     - name: "Setup HBAC: Disable allow all"
       freeipa.ansible_freeipa.ipahbacrule:
@@ -168,11 +247,23 @@
 
     - name: Setup munge key overlay
       ansible.builtin.copy:
-        src: munge.key.ww
+        content: '{%raw%}{{Include "/etc/munge/munge.key"}}{%endraw%}' # XXX templated by warewulf, not ansible
         dest: /srv/warewulf/overlays/generic/etc/munge/munge.key.ww
         owner: munge
         group: munge
         mode: 0400
+
+    - name: Ensure webhook key overlay path exists
+      ansible.builtin.file:
+        path: /srv/warewulf/overlays/generic/etc/webhookd/
+        state: directory
+
+    - name: Setup webhook key overlay
+      ansible.builtin.copy:
+        content: '{{''{{''}}Include "/etc/webhookd/{{item}}"}}' # XXX templated by warewulf, not ansible
+        dest: /srv/warewulf/overlays/generic/etc/webhookd/{{item}}.ww
+        mode: 0600
+      loop: [client.pem, client.key, server.pem]
 
     - name: Ensure add host overlay path exists
       ansible.builtin.file:
@@ -312,7 +403,7 @@
     - name: Build webhookd
       ansible.builtin.shell:
         cmd: |
-          go install -buildmode=pie -ldflags=-s github.com/ncarlier/webhookd@aad75eb
+          go install -buildmode=pie -ldflags=-s github.com/ncarlier/webhookd@0df2a52
           cp go/bin/webhookd /usr/bin/webhookd
           rm -rf go
         chdir: /root

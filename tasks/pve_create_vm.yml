@@ -16,7 +16,7 @@
     scsihw: "virtio-scsi-pci"
     sata:
       sata0: "{{storage_pool}}:cloudinit,media=cdrom"
-    sshkeys: "{{vm_sshkeys}}"
+    sshkeys: "{{vm_sshkeys|join('\n')}}"
     ciuser: "{{vm_user}}"
     cipassword: "{{vm_password}}"
     ipconfig: "{{vm_ipconfig}}"

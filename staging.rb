@@ -59,9 +59,9 @@ module Staging
     raise "Public key file #{SSH_PUBLIC_KEY} not found" unless File.file?(SSH_PUBLIC_KEY)
     raise "Public key file #{SSH_PRIVATE_KEY} not found" unless File.file?(SSH_PRIVATE_KEY)
 
-    ssh_pub_keys = [File.read(SSH_PUBLIC_KEY).strip]
+    ssh_pub_keys = [File.read(SSH_PUBLIC_KEY).strip, File.read(SSH_PUBLIC_KEY).strip]
     test_password = 'vagrant0' # IPA needs >= 8 characters
-    ssh_keys = ssh_pub_keys.join("\n")
+    ssh_keys = ssh_pub_keys
     pve_vars = {
       pve_username: 'root@pam',
       pve_password: 'vagrant',
@@ -180,6 +180,7 @@ module Staging
       "ungrouped": {
         "hosts":
         extra_hosts.merge(
+          "router.#{DOMAIN}": host_inventory_block(router_node_vars[:router_ip], SSH_PRIVATE_KEY, host_common_hash),
           "idm.#{DOMAIN}": host_inventory_block(idm_node_vars[:idm_ip], SSH_PRIVATE_KEY, host_common_hash),
           "mgmt.#{DOMAIN}": host_inventory_block(mgmt_node_vars[:mgmt_ip], SSH_PRIVATE_KEY, host_common_hash)
         ).merge(

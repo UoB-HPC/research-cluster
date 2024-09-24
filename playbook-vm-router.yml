@@ -59,3 +59,15 @@
 
     - include_tasks: tasks/pve_vm_state.yml
       vars: { vm_name: "router.{{domain}}", vm_state: restarted }
+
+- hosts: router.{{domain}}
+  become: true
+  tasks:
+    - name: Check router connection works
+      ansible.builtin.shell: "hostname"
+      register: hostname
+
+    - name: Check if hostname is as expected
+      ansible.builtin.fail:
+        msg: "Expected hostname was 'router.{{domain}}', but got '{{hostname.stdout.strip()}}'"
+      when: hostname.stdout.strip() != inventory_hostname

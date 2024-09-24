@@ -100,6 +100,19 @@
 
     ### Configure webhookd provision notifications ###
 
+    - name: Create /etc/webhookd dir
+      ansible.builtin.file:
+        state: directory
+        path: /etc/webhookd
+        mode: 755
+
+    - name: Upload webhookd mTLS credentials
+      ansible.builtin.copy:
+        src: "{{backup_directory}}/mgmt.{{domain}}/{{item}}"
+        dest: "/etc/webhookd/{{item}}"
+        mode: 600
+      loop: [client.pem, client.key, server.pem]
+
     - name: Setup pam_exec user provision script
       ansible.builtin.template:
         src: webhookd_notify_provision.sh.j2

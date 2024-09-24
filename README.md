@@ -137,6 +137,7 @@ ungrouped:
     pve_node: pve
     router_host: router
     router_password: <YOUR_PASSWORD>
+    router_sshkeys: [<YOUR_KEYS>]
     router_disk_size: 6G
     router_mem_gb: 2
     router_ncores: 6
@@ -151,7 +152,7 @@ ungrouped:
     idm_disk_size: 10G
     idm_mem_gb: 4
     idm_ncores: 6
-    idm_sshkeys: <YOUR_KEYS>
+    idm_sshkeys: [<YOUR_KEYS>]
     idm_ip: <YOUR_UNIQUE_IP_ADDR_FOR_THIS_NODE>
     ipa_password: <YOUR_PASSWORD>
     idm_default_group: cluster-user
@@ -160,7 +161,7 @@ ungrouped:
     mgmt_disk_size: 20G
     mgmt_mem_gb: 2
     mgmt_ncores: 6
-    mgmt_sshkeys: <YOUR_KEYS>
+    mgmt_sshkeys: [<YOUR_KEYS>]
     mgmt_rds_disk: "/dev/disk/by-id/<YOUR_DISK_LABEL>"
     mgmt_ip: <YOUR_UNIQUE_IP_ADDR_FOR_THIS_NODE>
     mgmt_netmask: 255.255.255.0
@@ -174,7 +175,7 @@ ungrouped:
     mgmt_cluster_name: staging
     login_message_of_the_day: <YOUR_MOTD>
     login_password: <YOUR_PASSWORD>
-    login_sshkeys: <YOUR_KEYS>
+    login_sshkeys: [<YOUR_KEYS>]
     login_disk_size_from_arch_map:
       x86_64: 10G
       aarch64: 10G

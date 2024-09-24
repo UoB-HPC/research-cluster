@@ -1,6 +1,7 @@
 #!/bin/sh
 
-if [ "${PAM_TYPE}" = "open_session" ] && [ "${PAM_USER}" != "root" ] && [ ! -d "/nfs/home/${PAM_USER}" ]; then
-    curl -Ss -XPOST "http://mgmt.{{domain}}:{{mgmt_webhook_port}}/webhookd_exec_provision?user=$PAM_USER"
+if [ "${PAM_TYPE}" = "open_session" ] && [ "${PAM_USER}" != "root" ] && [ ! -d "/home/${PAM_USER}" ]; then
+    curl -Ss -XPOST "https://mgmt.{{domain}}:{{mgmt_webhook_port}}/webhookd_exec_provision?user=$PAM_USER" \
+        --cert /etc/webhookd/client.pem --key /etc/webhookd/client.key --cacert /etc/webhookd/server.pem
 fi
 exit 0
