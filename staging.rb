@@ -153,10 +153,10 @@ module Staging
         overlays: %w[wwinit generic arch-x86_64],
         sockets: 1,
         threads_per_core: 1,
-        cores_per_socket: 2,
+        cores_per_socket: 4,
         pve_disk_size: '1G',
         pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
-        pve_ncores: 2
+        pve_ncores: 4
       },
       "compute1.#{DOMAIN}": {
         ip: '10.10.10.151',
@@ -168,10 +168,10 @@ module Staging
         overlays: %w[wwinit generic arch-aarch64],
         sockets: 1,
         threads_per_core: 1,
-        cores_per_socket: 2,
+        cores_per_socket: 4,
         pve_disk_size: '1G',
         pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
-        pve_ncores: 2
+        pve_ncores: 4
       }
     }
 

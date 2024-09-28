@@ -10,7 +10,7 @@ ALMA_VERSION_MAJOR := $(shell VERSION=$(ALMA_VERSION); echo $${VERSION%%.*})
 
 all: opnsense.qcow2 \
 	bos.x86_64.qcow2 bos.aarch64.qcow2 \
-	cos.x86_64.warewulf.tar  cos.aarch64.warewulf.tar
+	cos.plain.x86_64.warewulf.tar  cos.plain.aarch64.warewulf.tar
 
 clean: 
 	rm -rf *.sha256 *.qcow2 *.iso *.iso.bz2 *.raw *.vmdk *.tar *.tmp.sh output-* .config .cache *.log
@@ -65,35 +65,14 @@ bos.%.qcow2: AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA
 	  almalinux.pkr.hcl
 	mv output-bos."$*"/$@ "$@"
 
-cos.%.qcow2: export PACKER_LOG = 1
-cos.%.qcow2: AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA_BUILD).%.qcow2 almalinux.pkr.hcl cos-provision.sh
-	packer init . 
-	packer build -force -only='cos.*' \
-	  -var "name=cos" \
-	  -var "image=$<" \
-	  -var "arch=$*" \
-	  -var "ovmf_code=$(OVMF_CODE_PATH)" -var "ovmf_vars=$(OVMF_VARS_PATH)" \
-	  -var "aavmf_code=$(AAVMF_CODE_PATH)" -var "aavmf_vars=$(AAVMF_VARS_PATH)" \
-	  -var "PACKAGES=$(PACKAGES)" \
-	  almalinux.pkr.hcl
-	mv output-cos."$*"/$@ "$@"
-
-VARIANT ?= plain
-
 # Builds a warewulf uncompressed VNFS template of COS with warewulf patches
 cos.%.warewulf.tar: Containerfile.cos.warewulf cos-provision.sh
+	$(eval VARIANT := $(word 1,$(subst ., ,$*))) \
+	$(eval ARCH := $(word 2,$(subst ., ,$*))) \
 	podman build --security-opt label=disable --no-cache \
-		--build-arg PACKAGES="$(PACKAGES)" \
-		--build-arg VARIANT="$(VARIANT)" \
-		--build-arg COS_RELEASE="$(ALMA_VERSION)" \
-		--platform "linux/$*" \
-		-f Containerfile.cos.warewulf -t "warewulf_cos_$(VARIANT)_$*"
-	podman save "warewulf_cos_$(VARIANT)_$*" >cos.$(VARIANT).$*.warewulf.tar
-
-# Builds a uncompressed RAW format of COS (the size of match the size of the disk)
-cos.%.raw: cos.%.qcow2
-	qemu-img convert "$<" "$@"
-
-# Builds a compressed VMDK format of COS
-cos.%.vmdk: cos.%.qcow2
-	qemu-img convert -f qcow2 -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 "$<" "$@"
+	  --build-arg PACKAGES="$(PACKAGES)" \
+	  --build-arg VARIANT="$(VARIANT)" \
+	  --build-arg COS_RELEASE="$(ALMA_VERSION)" \
+	  --platform "linux/$(ARCH)" \
+	  -f Containerfile.cos.warewulf -t "warewulf_cos_$*"
+	podman save "warewulf_cos_$*" >"$@"

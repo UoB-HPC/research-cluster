@@ -19,13 +19,14 @@
 
     - name: Generate webhookd privatekeys
       community.crypto.openssl_privatekey:
-        path: "/etc/webhookd/{{item}}.key"
-        mode: 600
+        path: "{{host_backup_directory}}/{{item}}.key"
       loop: [server, client]
+      delegate_to: localhost
+      become: false
 
     - name: Create CSR for new certificate
       community.crypto.openssl_csr_pipe:
-        privatekey_path: "/etc/webhookd/{{item}}.key"
+        privatekey_path: "{{host_backup_directory}}/{{item}}.key"
         use_common_name_for_san: false
         common_name: local CA
         subject_alt_name:
@@ -33,22 +34,25 @@
           - "DNS:{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
       register: csr
       loop: [server, client]
+      delegate_to: localhost
+      become: false
 
     - name: Generate webhookd publickeys
       community.crypto.x509_certificate:
-        privatekey_path: "/etc/webhookd/{{item.item}}.key"
-        path: "/etc/webhookd/{{item.item}}.pem"
+        privatekey_path: "{{host_backup_directory}}/{{item.item}}.key"
+        path: "{{host_backup_directory}}/{{item.item}}.pem"
         csr_content: "{{item.csr}}"
         provider: selfsigned
         selfsigned_not_after: "+3650d"
-        mode: 644
       loop: "{{csr.results}}"
+      delegate_to: localhost
+      become: false
 
-    - name: Fetch webhookd keypairs
-      ansible.builtin.fetch:
-        flat: true
-        src: "/etc/webhookd/{{item}}"
-        dest: "{{host_backup_directory}}/{{item}}"
+    - name: Upload webhookd keypairs
+      ansible.builtin.copy:
+        src: "{{host_backup_directory}}/{{item}}"
+        dest: "/etc/webhookd/{{item}}"
+        mode: 600
       loop: [server.pem, server.key, client.pem, client.key]
 
     - name: Allow binding webhook port in SELinux
@@ -300,29 +304,32 @@
         group: "{{idm_default_group}}"
       loop: "{{mgmt_exported_directories}}"
 
-    - name: Permit mountd service
+    - name: Permit rpc-bind and dependent services
       ansible.posix.firewalld:
-        service: mountd
+        service: "{{item}}"
         state: enabled
         permanent: true
-
-    - name: Permit rpc-bind service
-      ansible.posix.firewalld:
-        service: rpc-bind
-        state: enabled
-        permanent: true
-
-    - name: Permit rquotad service
-      ansible.posix.firewalld:
-        service: rquotad
-        state: enabled
-        permanent: true
+      loop: [rpc-bind, mountd, rquotad]
 
     - name: Enable rquotad service
       ansible.builtin.systemd_service:
         name: rpc-rquotad
         state: started
         enabled: true
+
+    - name: Enable NFSv4 only
+      ansible.builtin.blockinfile:
+        path: /etc/nfs.conf
+        append_newline: true
+        prepend_newline: true
+        marker: "### {mark} Ansible generated block: do not edit this section! ###"
+        block: |
+          [nfsd]
+          vers3=n
+          vers4=y
+          vers4.0=y
+          vers4.1=y
+          vers4.2=y
 
     ### rds1 NFS ###
 

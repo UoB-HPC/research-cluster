@@ -1,0 +1,9 @@
+- name: Update login node MOTD
+  hosts: "login-*.{{domain}}"
+  become: true
+
+  tasks:
+    - name: Upload motd
+      ansible.builtin.copy:
+        content: "{{login_message_of_the_day}}"
+        dest: /etc/motd.d/00-welcome.motd

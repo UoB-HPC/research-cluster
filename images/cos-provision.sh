@@ -7,9 +7,14 @@ dnf install -y "https://repos.openhpc.community/OpenHPC/3/EL_9/$(arch)/ohpc-rele
 dnf config-manager --set-enabled crb
 dnf copr enable cyqsimon/micro -y
 
+IFS='_' read -r -a values <<<"$VARIANT"
+if [ ${#values[@]} -eq 0 ]; then
+  echo "No variant specified"
+  exit 1
+fi
+
 dnf update -y
 
-IFS='_' read -r -a values <<<"$VARIANT"
 for value in "${values[@]}"; do
   case $value in
   plain)
