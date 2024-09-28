@@ -89,7 +89,7 @@ jobs:
         run: |
           vagrant plugin install vagrant-libvirt
           sudo apt-get reinstall -y qemu-user-static
-          pipx inject ansible-core passlib
+          pipx inject ansible-core passlib cryptography
         if: always()
 
       - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
