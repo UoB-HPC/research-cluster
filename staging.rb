@@ -190,7 +190,6 @@ module Staging
 
     common_vars = common_vars(storage_pool)
     extra_inventory = {
-      "root_sshkeys": ssh_pub_keys,
       "ungrouped": {
         "hosts":
         extra_hosts.merge(
