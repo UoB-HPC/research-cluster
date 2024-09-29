@@ -17,6 +17,15 @@
         firstmatch: yes
         line: ""
 
+    - name: Update slurm gres config
+      ansible.builtin.blockinfile:
+        path: /etc/slurm/gres.conf
+        block: |
+          AutoDetect=nvml
+          AutoDetect=rsmi
+          AutoDetect=nrt
+          AutoDetect=oneapi
+
     - name: Update slurm stateless partition and node definitions
       ansible.builtin.blockinfile:
         path: /etc/slurm/slurm.conf
@@ -29,7 +38,7 @@
           ReturnToService=2 
           MaxNodeCount=65536
           SrunPortRange={{srun_port_range}}
-          PartitionName=compute Default=YES MaxTime=2-00 State=UP Nodes=ALL
+          GresTypes=gpu
           {{ lookup('ansible.builtin.template', './slurm.nodes.conf.j2') }}
 
     - name: Restart slurmctld

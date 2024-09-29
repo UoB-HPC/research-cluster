@@ -32,7 +32,7 @@ This section is written against a Fedora host environment, you may need to adjus
 
     ```shell
     pipx install ansible
-    pipx inject ansible passlib
+    pipx inject ansible passlib cryptography
     ```
 
     See <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html> for more installation methods.
@@ -128,7 +128,7 @@ ungrouped:
     unattended_security_update_interval: "Mon *-*-1..7 00:00:00"
     srun_port_range: 60001-65000
     storage_pool: local-lvm
-    ssh_private_key: "<PATH_TO_PRIVATE_KEY>"
+    test_ssh_private_key: "<PATH_TO_PRIVATE_KEY>"
     arch_to_dns_map:
       x86_64: amd64
       aarch64: arm64

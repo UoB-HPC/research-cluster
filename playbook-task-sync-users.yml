@@ -3,6 +3,19 @@
   become: true
 
   tasks:
+    - name: Ensure IPA sudo group
+      freeipa.ansible_freeipa.ipagroup:
+        ipaadmin_password: "{{ipa_password}}"
+        name: sudo
+
+    - name: Ensure IPA sudo rule
+      freeipa.ansible_freeipa.ipasudorule:
+        ipaadmin_password: "{{ipa_password}}"
+        name: sudo
+        group: sudo
+        cmdcat: all
+        hostcat: all
+
     - name: Query uids
       command: ipa --no-prompt user-find --raw
       register: ipa_users
@@ -35,4 +48,18 @@
         last: "{{item.value.last}}"
         email: "{{item.value.email}}"
         sshpubkey: "{{item.value.publickey}}"
+        uid: "{{range(1000, 32768) | random(seed=item.key)}}"
+        gid: "{{range(1000, 32768) | random(seed=item.key)}}"
+        state: present
+        password: ""
+        update_password: on_create
       loop: "{{users | dict2items}}"
+
+    - name: Ensure user sudo rules
+      freeipa.ansible_freeipa.ipagroup:
+        ipaadmin_password: "{{ipa_password}}"
+        name: sudo
+        action: member
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.group == "sudo"

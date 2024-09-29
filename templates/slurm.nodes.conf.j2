@@ -1,5 +1,11 @@
+{% for part, vars in partitions.items() %}
+{% set node_list = [] %}
+{% for node, node_vars in nodes.items() if node_vars.partition == part %}
+{% set _ = node_list.append(node) %}
+{% endfor %}
+PartitionName={{part}} State=UP MaxTime={{vars.max_time}} {{vars.extra}} Nodes={{node_list | join(',')}}
+{% endfor %}
 
 {% for node, vars in nodes.items() %}
 NodeName={{node}} Sockets={{vars.sockets}} CoresPerSocket={{vars.cores_per_socket}} ThreadsPerCore={{vars.threads_per_core}} State=UNKNOWN
 {% endfor %}
-

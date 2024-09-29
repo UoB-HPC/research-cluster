@@ -45,7 +45,7 @@ module Staging
       unattended_security_update_interval: 'Mon *-*-1..7 00:00:00',
       srun_port_range: '60001-65000',
       storage_pool: storage_pool,
-      ssh_private_key: SSH_PRIVATE_KEY,
+      test_ssh_private_key: SSH_PRIVATE_KEY,
       delete_templates: true,
       arch_to_dns_map: {
         x86_64: 'amd64',
@@ -59,7 +59,7 @@ module Staging
     raise "Public key file #{SSH_PUBLIC_KEY} not found" unless File.file?(SSH_PUBLIC_KEY)
     raise "Public key file #{SSH_PRIVATE_KEY} not found" unless File.file?(SSH_PRIVATE_KEY)
 
-    ssh_pub_keys = [File.read(SSH_PUBLIC_KEY).strip, File.read(SSH_PUBLIC_KEY).strip]
+    ssh_pub_keys = [File.read(SSH_PUBLIC_KEY).strip, "#{File.read(SSH_PUBLIC_KEY).strip}_copy"]
     test_password = 'vagrant0' # IPA needs >= 8 characters
     ssh_keys = ssh_pub_keys
     pve_vars = {
@@ -142,6 +142,17 @@ module Staging
       }
     }
 
+    partitions = {
+      host: {
+        max_time: '1-00:00:00',
+        extra: 'Default=YES'
+      },
+      arm: {
+        max_time: '0-03:00:00',
+        extra: ''
+      }
+    }
+
     compute_nodes = {
       "compute0.#{DOMAIN}": {
         ip: '10.10.10.150',
@@ -156,7 +167,8 @@ module Staging
         cores_per_socket: 4,
         pve_disk_size: '1G',
         pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
-        pve_ncores: 4
+        pve_ncores: 4,
+        partition: 'host'
       },
       "compute1.#{DOMAIN}": {
         ip: '10.10.10.151',
@@ -171,12 +183,14 @@ module Staging
         cores_per_socket: 4,
         pve_disk_size: '1G',
         pve_mem_gb: 10, # Otherwise iPXE runs out of memory decompressing initramfs
-        pve_ncores: 4
+        pve_ncores: 4,
+        partition: 'arm'
       }
     }
 
     common_vars = common_vars(storage_pool)
     extra_inventory = {
+      "root_sshkeys": ssh_pub_keys,
       "ungrouped": {
         "hosts":
         extra_hosts.merge(
@@ -198,19 +212,22 @@ module Staging
           login_node_vars
         ).merge(
           "all_arch": %w[x86_64 aarch64],
+          "partitions": partitions,
           "nodes": compute_nodes,
           "users": {
             "foo": {
               "first": 'foo',
               "last": 'foo',
               "email": 'foo@example.com',
-              "publickey": ssh_pub_keys
+              "publickey": ssh_keys,
+              "group": ''
             },
             "bar": {
               "first": 'bar',
               "last": 'bar',
               "email": 'bar@example.com',
-              "publickey": ssh_pub_keys
+              "publickey": ssh_keys,
+              "group": 'sudo'
             }
           }
         )
