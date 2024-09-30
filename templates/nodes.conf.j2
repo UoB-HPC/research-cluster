@@ -22,8 +22,10 @@ nodes:
       ipaddr: {{vars.mgmt_ip}}
       interface: lanplus
 {% endif %}
+{% if vars.kernargs is defined %}
     kernel:
       args: {{vars.kernargs}}
+{% endif %}
     network devices:
       default:
         hwaddr: {{vars.mac}}

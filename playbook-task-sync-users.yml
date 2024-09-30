@@ -53,8 +53,7 @@
 
     - name: Debug and print existing_users
       debug:
-        var: users_to_delete
-        msg: "Run with --extra-vars=delete_users=true to delete these users"
+        msg: "Users: \n{{users_to_delete}}\nRun with --extra-vars=delete_users=true to delete these users"
       when: delete_users is undefined
 
     - name: "Drop absent users"
