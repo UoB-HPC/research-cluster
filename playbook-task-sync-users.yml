@@ -1,12 +1,35 @@
 - name: Sync users
   hosts: "mgmt.{{domain}}"
   become: true
+  vars:
+    base_id: 32768
+    base_id_range: 32768
 
   tasks:
-    - name: Ensure IPA sudo group
+    # See https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/managing_idm_users_groups_hosts_and_access_control_rules/adjusting-id-ranges-manually_managing-users-groups-hosts
+    # If we don't do this, ipantsecurityidentifier won't be injected and not even `ipa config-mod --enable-sid --add-sids` won't fix it either.
+    - name: Ensure IPA ID Range for the local domain
+      freeipa.ansible_freeipa.ipaidrange:
+        ipaadmin_password: "{{ipa_password}}"
+        name: local_domain_id_range
+        base_id: "{{base_id}}"
+        range_size: "{{base_id_range}}"
+        rid_base: "{{base_id+200000}}"
+        secondary_rid_base: "{{base_id+100000000+200000}}"
+
+    - name: Restart dirsrv on IDM
+      ansible.builtin.systemd_service:
+        name: "dirsrv@{{domain|upper|replace('.','-')}}.service"
+        state: restarted
+      delegate_to: "idm.{{domain}}"
+
+    - name: Ensure IPA sudo/video group
       freeipa.ansible_freeipa.ipagroup:
         ipaadmin_password: "{{ipa_password}}"
-        name: sudo
+        groups:
+          - name: sudo
+          - name: video
+          - name: render
 
     - name: Ensure IPA sudo rule
       freeipa.ansible_freeipa.ipasudorule:
@@ -31,6 +54,8 @@
     - name: Debug and print existing_users
       debug:
         var: users_to_delete
+        msg: "Run with --extra-vars=delete_users=true to delete these users"
+      when: delete_users is undefined
 
     - name: "Drop absent users"
       freeipa.ansible_freeipa.ipauser:
@@ -40,7 +65,7 @@
       loop: "{{users_to_delete}}"
       when: users_to_delete | length > 0 and delete_users | default(false) | bool
 
-    - name: "Import all users"
+    - name: "Import all users" # XXX Generate uid/gid via the same seed so that home directory permissions persist
       freeipa.ansible_freeipa.ipauser:
         ipaadmin_password: "{{ipa_password}}"
         name: "{{item.key}}"
@@ -48,10 +73,9 @@
         last: "{{item.value.last}}"
         email: "{{item.value.email}}"
         sshpubkey: "{{item.value.publickey}}"
-        uid: "{{range(1000, 32768) | random(seed=item.key)}}"
-        gid: "{{range(1000, 32768) | random(seed=item.key)}}"
+        uid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
+        gid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
         state: present
-        password: ""
         update_password: on_create
       loop: "{{users | dict2items}}"
 
@@ -62,4 +86,30 @@
         action: member
         user: "{{item.key}}"
       loop: "{{users | dict2items}}"
-      when: item.value.group == "sudo"
+      when: item.value.groups is contains("sudo")
+
+    - name: Ensure user video group
+      freeipa.ansible_freeipa.ipagroup:
+        ipaadmin_password: "{{ipa_password}}"
+        name: video
+        action: member
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.groups is contains("video")
+
+    - name: Ensure user render group
+      freeipa.ansible_freeipa.ipagroup:
+        ipaadmin_password: "{{ipa_password}}"
+        name: render
+        action: member
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.groups is contains("render")
+
+- name: Force update SSS
+  hosts: "mgmt.{{domain}}, login-*.{{domain}}"
+  become: true
+
+  tasks:
+    - name: Drop SSS cache
+      command: sss_cache -U

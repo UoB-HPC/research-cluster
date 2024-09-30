@@ -15,6 +15,15 @@ nodes:
     - default
     container name: {{vars.image}}
     system overlay: {{vars.overlays}}
+{% if vars.ipmi is defined %}
+    ipmi:
+      username: {{vars.ipmi.username}}
+      password: {{vars.ipmi.password}}
+      ipaddr: {{vars.mgmt_ip}}
+      interface: lanplus
+{% endif %}
+    kernel:
+      args: {{vars.kernargs}}
     network devices:
       default:
         hwaddr: {{vars.mac}}

@@ -12,6 +12,7 @@ dnf install -y --allowerasing --setopt=install_weak_deps=False \
     podman perl /bin/mailx ${PACKAGES}
 
 dnf groupinstall 'Development Tools' --setopt=group_package_types=mandatory -y
+dnf install -y gfortran
 
 dnf clean all
 
