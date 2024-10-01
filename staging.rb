@@ -219,14 +219,14 @@ module Staging
               "last": 'foo',
               "email": 'foo@example.com',
               "publickey": ssh_keys,
-              "group": ''
+              "groups": ['']
             },
             "bar": {
               "first": 'bar',
               "last": 'bar',
               "email": 'bar@example.com',
               "publickey": ssh_keys,
-              "group": 'sudo'
+              "groups": ['sudo']
             }
           }
         )
