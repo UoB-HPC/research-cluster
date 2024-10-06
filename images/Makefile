@@ -37,7 +37,7 @@ PACKAGES = micro \
 		   java-17-openjdk-headless bash-completion git cmake wget curl rclone rsync \
 		   ncurses-compat-libs htop lsof net-tools traceroute tcpdump iproute ethtool \
 		   emacs-nox vim nano tree moreutils parallel tmux screen file which words ripgrep \
-		   usbutils pciutils lm_sensors hwloc numactl psmisc ltrace strace perf valgrind
+		   clinfo usbutils pciutils lm_sensors hwloc numactl psmisc ltrace strace perf valgrind
 
 space := $(subst ,, )
 comma := ,

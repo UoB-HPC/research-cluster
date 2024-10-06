@@ -2,7 +2,49 @@ name: CI
 on: [push]
 
 jobs:
-  build:
+  test-image:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        image:
+          - cos.plain.x86_64.warewulf.tar
+          - cos.lt.x86_64.warewulf.tar
+          - cos.ml.x86_64.warewulf.tar
+
+          - cos.plain.aarch64.warewulf.tar
+          - cos.lt.aarch64.warewulf.tar
+          - cos.ml.aarch64.warewulf.tar
+
+          - cos.plain_cuda.x86_64.warewulf.tar
+          - cos.ml_cuda.x86_64.warewulf.tar
+          - cos.lt_cuda.x86_64.warewulf.tar
+
+          - cos.plain_cuda.aarch64.warewulf.tar
+          - cos.ml_cuda.aarch64.warewulf.tar
+          - cos.lt_cuda.aarch64.warewulf.tar
+
+          - cos.plain_rocm.x86_64.warewulf.tar
+          - cos.ml_rocm.x86_64.warewulf.tar
+          - cos.lt_rocm.x86_64.warewulf.tar
+
+          - cos.el8.aarch64.warewulf.tar
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        if: always()
+
+      - name: Build image
+        working-directory: images
+        run: make ${{ matrix.image }}
+        if: always()
+
+      - name: Image stats
+        working-directory: images
+        run: tree --du -h
+        if: always()
+
+  test-deploy:
     runs-on: ubuntu-24.04
     steps:
       - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
