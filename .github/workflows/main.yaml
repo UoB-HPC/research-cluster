@@ -39,6 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-suggests qemu-system-x86 qemu-system-aarch64
+          sudo apt-get reinstall -y qemu-user-static
         if: always()
 
       - name: Build image
