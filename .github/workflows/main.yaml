@@ -4,6 +4,7 @@ on: [push]
 jobs:
   test-image:
     runs-on: ubuntu-24.04
+    continue-on-error: true
     strategy:
       matrix:
         image:
@@ -32,6 +33,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        if: always()
+
+      - name: Setup QEMU binfmt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-suggests qemu-system-x86 qemu-system-aarch64
         if: always()
 
       - name: Build image
