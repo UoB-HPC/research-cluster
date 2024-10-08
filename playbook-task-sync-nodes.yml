@@ -34,7 +34,10 @@
         marker: "### {mark} Ansible generated block: do not edit this section! ###"
         # XXX Re-add SlurmctldParameters and ReturnToService due to malformed template, see https://github.com/stackhpc/ansible-role-openhpc/issues/170
         block: |
+          SchedulerParameters=sched_interval=1
           SlurmctldParameters=enable_configless
+          PrologFlags=Alloc
+          PriorityCalcPeriod=1
           ReturnToService=2 
           MaxNodeCount=65536
           SrunPortRange={{srun_port_range}}
