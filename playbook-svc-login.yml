@@ -7,6 +7,21 @@
     - include_tasks: tasks/backup_or_restore_host_keys.yml
     - include_tasks: tasks/setup_unattended_security_updates.yml
 
+    - name: Setup fail2ban
+      ansible.builtin.dnf:
+        name: ["fail2ban"]
+
+    - name: Configure fail2ban_config
+      ansible.builtin.template:
+        src: "ssh.conf.fail2ban.j2"
+        dest: /etc/fail2ban/jail.d/ssh.conf
+
+    - name: Enable fail2ban service
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        state: restarted
+        enabled: true
+
     - name: Setup missing Slurm dependencies
       ansible.builtin.dnf:
         name: ["/bin/mailx", "Lmod"]
