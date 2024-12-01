@@ -43,8 +43,8 @@ space := $(subst ,, )
 comma := ,
 
 AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA_BUILD).%.qcow2:
-	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION_MAJOR)/cloud/$*/images/$@ -O $@
-	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION_MAJOR)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
+	wget https://repo.almalinux.org/almalinux/$(ALMA_BUILD)/cloud/$*/images/$@ -O $@
+	wget https://repo.almalinux.org/almalinux/$(ALMA_BUILD)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
 	sha256sum -c bos-checksums.sha256 --ignore-missing
 
 AAVMF_CODE_PATH := $(firstword $(wildcard /usr/share/AAVMF/AAVMF_CODE*.fd))
