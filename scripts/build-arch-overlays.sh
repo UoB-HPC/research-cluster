@@ -13,8 +13,19 @@ extract_wwclient_for_arch() {
         dnf download "warewulf-ohpc.$arch"
         rpm2cpio warewulf-ohpc*."$arch".rpm | cpio -idm
 
-        cp "./srv/warewulf/overlays/wwinit/warewulf/wwclient" "$dest/wwclient"
-        file "$dest/wwclient"
+        # warewulf-ohpc >= 4.5.0 has an extra rootfs/ segment in the wwclient path
+        for src in \
+            "./srv/warewulf/overlays/wwinit/warewulf/wwclient" \
+            "./srv/warewulf/overlays/wwinit/rootfs/warewulf/wwclient"; do
+            if [[ -e "$src" ]]; then
+                cp "$src" "$dest/wwclient"
+                file "$dest/wwclient"
+                break
+            fi
+        done || {
+            echo "Error: wwclient not found in any expected paths." >&2
+            exit 1
+        }
     )
     rm -rf "$wd"
 }

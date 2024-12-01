@@ -54,6 +54,14 @@ jobs:
 
   test-deploy:
     runs-on: ubuntu-24.04
+    continue-on-error: true
+    strategy:
+      matrix:
+        alma:
+          - { version: "9.4", build: "20240805" }
+          - { version: "9.5", build: "20241120" }
+        opnsense:
+          - { version: "24.7" }
     steps:
       - { name: Stats, run: df -H && sudo fstrim -av, if: always() }
 
@@ -146,17 +154,17 @@ jobs:
 
       - name: Create opnsense image
         working-directory: images
-        run: make opnsense.qcow2
+        run: make OPNSENSE_VERSION=${{ matrix.opnsense.version }} ALMA_VERSION=${{ matrix.alma.version }} ALMA_BUILD=${{ matrix.alma.build }} opnsense.qcow2
         if: always()
 
       - name: Build x86_64 bos/cos images
         working-directory: images
-        run: make bos.x86_64.qcow2 cos.plain.x86_64.warewulf.tar -j
+        run: make OPNSENSE_VERSION=${{ matrix.opnsense.version }} ALMA_VERSION=${{ matrix.alma.version }} ALMA_BUILD=${{ matrix.alma.build }} bos.x86_64.qcow2 cos.plain.x86_64.warewulf.tar -j
         if: always()
 
       - name: Build aarch64 bos/cos images
         working-directory: images
-        run: make bos.aarch64.qcow2 cos.plain.aarch64.warewulf.tar -j
+        run: make OPNSENSE_VERSION=${{ matrix.opnsense.version }} ALMA_VERSION=${{ matrix.alma.version }} ALMA_BUILD=${{ matrix.alma.build }} bos.aarch64.qcow2 cos.plain.aarch64.warewulf.tar -j
         if: always()
 
       - name: Image stats

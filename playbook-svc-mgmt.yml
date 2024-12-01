@@ -352,6 +352,10 @@
         state: absent
         path: /etc/root.keytab
 
+    - name: Install pexpect
+      ansible.builtin.dnf:
+        name: ["python3-pexpect"]
+
     - name: Create root user keytab
       ansible.builtin.expect:
         command: ktutil
