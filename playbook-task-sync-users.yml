@@ -74,8 +74,28 @@
         sshpubkey: "{{item.value.publickey}}"
         uid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
         gid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
+        homedir: "/home/{{item.key}}"
         state: present
         update_password: on_create
+      loop: "{{users | dict2items}}"
+
+    - name: Ensure home directories exist with correct permissions
+      file:
+        path: "/mnt/rds1/home/{{item.key}}"
+        state: directory
+        owner: "{{item.key}}"
+        group: "{{item.key}}"
+        mode: "0700"
+      loop: "{{users | dict2items}}"
+
+    - name: Ensure /etc/skel files exist in users directories without overwriting
+      copy:
+        src: /etc/skel/
+        dest: "/mnt/rds1/home/{{item.key}}/"
+        owner: "{{item.key}}"
+        group: "{{item.key}}"
+        mode: "0644"
+        force: no
       loop: "{{users | dict2items}}"
 
     - name: Ensure user sudo rules
