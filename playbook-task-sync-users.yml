@@ -98,32 +98,37 @@
         force: no
       loop: "{{users | dict2items}}"
 
-    - name: Ensure user sudo rules
+    # This allows us to apply group rules in one go, speeding up this playbook a lot!
+    - name: Collect group member lists
+      set_fact:
+        group_memberships:
+          sudo: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'sudo') | map(attribute='key') | list }}"
+          video: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'video') | map(attribute='key') | list }}"
+          render: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'render') | map(attribute='key') | list }}"
+
+    - name: Ensure sudo group members
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ipa_password}}"
+        ipaadmin_password: "{{ ipa_password }}"
         name: sudo
         action: member
-        user: "{{item.key}}"
-      loop: "{{users | dict2items}}"
-      when: item.value.groups is contains("sudo")
+        user: "{{ group_memberships.sudo }}"
+      when: group_memberships.sudo | length > 0
 
-    - name: Ensure user video group
+    - name: Ensure video group members
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ipa_password}}"
+        ipaadmin_password: "{{ ipa_password }}"
         name: video
         action: member
-        user: "{{item.key}}"
-      loop: "{{users | dict2items}}"
-      when: item.value.groups is contains("video")
+        user: "{{ group_memberships.video }}"
+      when: group_memberships.video | length > 0
 
-    - name: Ensure user render group
+    - name: Ensure render group members
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ipa_password}}"
+        ipaadmin_password: "{{ ipa_password }}"
         name: render
         action: member
-        user: "{{item.key}}"
-      loop: "{{users | dict2items}}"
-      when: item.value.groups is contains("render")
+        user: "{{ group_memberships.render }}"
+      when: group_memberships.render | length > 0
 
 - name: Force update SSS
   hosts: "mgmt.{{domain}}, login-*.{{domain}}"
