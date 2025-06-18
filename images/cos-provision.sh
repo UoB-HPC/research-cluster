@@ -49,7 +49,11 @@ EOF
     dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/$nv_arch/cuda-rhel9.repo
     dnf module enable -y nvidia-driver:open-dkms
     dnf install -y nvidia-driver-cuda
-    ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
+    #dkms_autoinstaller isn't shipped in latest packages. Use `dkms autoinstall` instead.
+    #ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
+    for kver in $(ls /lib/modules); do
+      dkms autoinstall -k "$kver"
+    done
     dkms status
     systemctl enable nvidia-persistenced
     ;;
@@ -80,7 +84,10 @@ gpgcheck=1
 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
 EOF
     dnf install -y amdgpu-dkms
-    ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
+    #ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
+    for kver in $(ls /lib/modules); do
+      dkms autoinstall -k "$kver"
+    done
     dkms status
     dnf install -y libdrm-amdgpu
 
@@ -107,8 +114,6 @@ dnf install -y --allowerasing --setopt=install_weak_deps=False \
 
 dnf groupinstall 'Development Tools' --setopt=group_package_types=mandatory -y
 dnf install -y gfortran
-dnf install -y epel-release
-dnf install -y dkms
 
 # Open up ports for slurm, NFS, SSH, and Wireguard
 cat <<EOF >/etc/firewalld/zones/public.xml
