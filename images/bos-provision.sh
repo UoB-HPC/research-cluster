@@ -13,6 +13,8 @@ dnf install -y --allowerasing --setopt=install_weak_deps=False \
 
 dnf groupinstall 'Development Tools' --setopt=group_package_types=mandatory -y
 dnf install -y gfortran
+dnf install -y epel-release
+dnf install -y dkms
 
 dnf clean all
 
