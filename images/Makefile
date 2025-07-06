@@ -17,8 +17,8 @@ clean:
 
 
 OPNsense-$(OPNSENSE_VERSION)-dvd-amd64.iso:
-	wget https://pkg.opnsense.org/releases/mirror/$@.bz2 -O $@.bz2
-	wget https://pkg.opnsense.org/releases/mirror/OPNsense-$(OPNSENSE_VERSION)-checksums-amd64.sha256 -O opnsense-checksums.sha256
+	wget https://pkg.opnsense.org/releases/$(OPNSENSE_VERSION)/$@.bz2 -O $@.bz2
+	wget https://pkg.opnsense.org/releases/$(OPNSENSE_VERSION)/OPNsense-$(OPNSENSE_VERSION)-checksums-amd64.sha256 -O opnsense-checksums.sha256
 	sha256sum -c opnsense-checksums.sha256 --ignore-missing
 	bunzip2 $@.bz2
 	rm -rf $@.bz2
@@ -43,8 +43,8 @@ space := $(subst ,, )
 comma := ,
 
 AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA_BUILD).%.qcow2:
-	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION)/cloud/$*/images/$@ -O $@
-	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
+	wget https://vault.almalinux.org/$(ALMA_VERSION)/cloud/$*/images/$@ -O $@
+	wget https://vault.almalinux.org/$(ALMA_VERSION)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
 	sha256sum -c bos-checksums.sha256 --ignore-missing
 
 AAVMF_CODE_PATH := $(firstword $(wildcard /usr/share/AAVMF/AAVMF_CODE*.fd))
