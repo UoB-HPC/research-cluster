@@ -13,4 +13,4 @@ roles:
 
 collections:
   - name: freeipa.ansible_freeipa
-    version: "1.13.2"
+    version: "1.14.5"

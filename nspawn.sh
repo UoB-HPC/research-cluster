@@ -201,7 +201,7 @@ if dpkg -l | grep -qw proxmox-ve; then
   echo "proxmox-ve is already installed"
 else
   sleep 1
-  apt-get install -y proxmox-ve postfix=1.5.1 open-iscsi chrony
+  apt-get install -y proxmox-ve postfix open-iscsi chrony
   rm -rf /etc/apt/sources.list.d/pve-enterprise.list
 fi
 poweroff
