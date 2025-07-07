@@ -1,6 +1,6 @@
-OPNSENSE_VERSION = 24.7
-ALMA_VERSION = 9.5
-ALMA_BUILD = 20241120
+OPNSENSE_VERSION = 25.1
+ALMA_VERSION = 9.6
+ALMA_BUILD = 20250520
 
 ALMA_VERSION_MAJOR := $(shell VERSION=$(ALMA_VERSION); echo $${VERSION%%.*})
 
@@ -25,8 +25,8 @@ OPNsense-$(OPNSENSE_VERSION)-dvd-amd64.iso:
 
 opnsense.qcow2: export PACKER_LOG = 1
 opnsense.qcow2: OPNsense-$(OPNSENSE_VERSION)-dvd-amd64.iso opnsense.pkr.hcl
-	/usr/bin/packer init .
-	/usr/bin/packer build -force -var "opnsense_image=$<" opnsense.pkr.hcl
+	packer init .
+	packer build -force -var "opnsense_image=$<" opnsense.pkr.hcl
 	mv output-opnsense/opnsense.qcow2 opnsense.qcow2
 
 ### For BOS ###
@@ -54,8 +54,8 @@ OVMF_VARS_PATH := $(firstword $(wildcard /usr/share/OVMF/OVMF_VARS*.fd))
 
 bos.%.qcow2: export PACKER_LOG = 1
 bos.%.qcow2: AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA_BUILD).%.qcow2 almalinux.pkr.hcl bos-provision.sh
-	/usr/bin/packer init . 
-	/usr/bin/packer build -force -only='bos.*' \
+	packer init .
+	packer build -force -only='bos.*' \
 	  -var "name=bos" \
 	  -var "image=$<" \
 	  -var "arch=$*" \
