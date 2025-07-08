@@ -1,6 +1,6 @@
 OPNSENSE_VERSION = 25.1
 ALMA_VERSION = 9.6
-ALMA_BUILD = 20250520
+ALMA_BUILD = 20250522
 
 ALMA_VERSION_MAJOR := $(shell VERSION=$(ALMA_VERSION); echo $${VERSION%%.*})
 
@@ -43,8 +43,8 @@ space := $(subst ,, )
 comma := ,
 
 AlmaLinux-$(ALMA_VERSION_MAJOR)-GenericCloud-$(ALMA_VERSION)-$(ALMA_BUILD).%.qcow2:
-	wget https://vault.almalinux.org/$(ALMA_VERSION)/cloud/$*/images/$@ -O $@
-	wget https://vault.almalinux.org/$(ALMA_VERSION)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
+	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION)/cloud/$*/images/$@ -O $@
+	wget https://repo.almalinux.org/almalinux/$(ALMA_VERSION)/cloud/$*/images/CHECKSUM -O bos-checksums.sha256
 	sha256sum -c bos-checksums.sha256 --ignore-missing
 
 AAVMF_CODE_PATH := $(firstword $(wildcard /usr/share/AAVMF/AAVMF_CODE*.fd))
