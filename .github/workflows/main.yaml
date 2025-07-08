@@ -60,7 +60,7 @@ jobs:
         alma:
           # - { version: "9.4", build: "20240805" }
           # - { version: "9.5", build: "20241120" }
-          - { version: "9.6", build: "20250520" }
+          - { version: "9.6", build: "20250522" }
         opnsense:
           # - { version: "24.7" }
           - { version: "25.1" }
