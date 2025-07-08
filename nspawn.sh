@@ -223,6 +223,10 @@ echo "nameserver 1.1.1.1" > /etc/resolv.conf
 export DEBIAN_FRONTEND=noninteractivec
 bash \$HOME/provision.sh "$CONTAINER_IP" "$CONTAINER_GW"
 systemctl restart networking
+systemctl start qemu-guest-agent
+systemctl enable qemu-guest-agent
+systemctl status qemu-guest-agent
+
 EOF
   ;;
 poweroff)
