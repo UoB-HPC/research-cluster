@@ -99,7 +99,7 @@ module Staging
       mgmt_host: 'mgmt',
       mgmt_password: test_password,
       mgmt_sshkeys: ssh_keys,
-      mgmt_disk_size: '24G',
+      mgmt_disk_size: '30G',
       mgmt_mem_gb: 2,
       mgmt_ncores: 4,
       mgmt_rds_disk: '/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_rds1',

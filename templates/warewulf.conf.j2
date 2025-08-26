@@ -1,4 +1,3 @@
-WW_INTERNAL: 43
 ipaddr: {{mgmt_ip}}
 netmask: {{mgmt_netmask}}
 network: {{mgmt_network}}
@@ -8,7 +7,6 @@ warewulf:
   update interval: 60
   autobuild overlays: true
   host overlay: true
-  syslog: false
 dhcp:
   enabled: true
   range start: {{mgmt_compute_dhcp_start}}
@@ -20,12 +18,6 @@ tftp:
 nfs:
   enabled: true
   export paths:
-  - path: /mnt/rds1
-    export options: rw # ,sec=krb5i
-    mount options: defaults
-    mount: false # let autofs handle this
+    - path: /mnt/rds1
+      export options: rw # ,sec=krb5i
   systemd name: nfs-server
-container mounts:
-  - source: /etc/resolv.conf
-    dest: /etc/resolv.conf
-    readonly: true

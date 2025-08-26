@@ -184,6 +184,12 @@
         state: enabled
         permanent: true
 
+    - name: Permit slurm srun ranges # permits srun on mgmt for testing/debug
+      ansible.posix.firewalld:
+        port: "{{srun_port_range}}/tcp"
+        state: enabled
+        permanent: true
+
     - name: Fetch munge key
       ansible.builtin.fetch:
         flat: true
@@ -396,6 +402,14 @@
         info: "mgmt.{{domain}}:/mnt/rds1/{{item}}"
         state: present
       loop: "{{mgmt_exported_directories}}"
+
+      # Fix for `Error: KCM operation failed : The maximum number of stored secrets has been reached``
+      # see https://access.redhat.com/solutions/7030690
+    - name: Disable default kcm_default_ccache
+      ansible.builtin.replace:
+        path: /etc/krb5.conf.d/kcm_default_ccache
+        regexp: "^(?!#)(.*)$"
+        replace: '# \1'
 
     # - include_tasks: tasks/ipa_client_automount.yml
 

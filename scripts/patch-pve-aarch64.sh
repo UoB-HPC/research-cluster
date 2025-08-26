@@ -20,3 +20,8 @@ qm set "$vm_id" --vga=serial0
 # Step 3: Add the correct arch type
 arch_line="arch: aarch64"
 grep -qF -- "$arch_line" "$config" || echo "$arch_line" >>"$config"
+
+# See discussion: https://forum.proxmox.com/threads/uefi-pxe-boot-issues-after-upgrading-from-proxmox-ve-8-3-4-to-8-3-5.164468/
+# Step 4: Add RNG, without this EDK2's EFI network stack won't work for "security" reasons
+rng_line="args: -object 'rng-random,filename=/dev/urandom,id=rng0' -device 'virtio-rng-pci,rng=rng0,max-bytes=1024,period=1000,bus=pcie.0,addr=0x1d'"
+grep -qF -- "$rng_line" "$config" || echo "$rng_line" >>"$config"

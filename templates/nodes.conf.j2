@@ -1,19 +1,45 @@
-WW_INTERNAL: 43
 nodeprofiles:
   default:
     comment: This profile is automatically included for each node
+    ipxe template: default
+    runtime overlay:
+      - hosts
+      - ssh.authorized_keys
+      - syncuser
+    system overlay:
+      - wwinit
+      - wwclient
+      - hostname
+      - ssh.host_keys
+      - resolv
+      - udev.netname
+      - systemd.netname
+      - ifcfg
+      - NetworkManager
+    kernel:
+      args:
+        - quiet
+        - crashkernel=no
+        - net.ifnames=1
+    ipmi:
+      template: ipmitool.tmpl
+    init: /sbin/init
+    root: initramfs
     network devices:
       default:
+        type: ethernet
         device: eth0
         netmask: {{mgmt_netmask}}
         gateway: {{router_ip}}
+        tags:
+          DNS0: {{idm_ip}}
 nodes:
 {% for node, vars in nodes.items() %}
   {{node}}:
     discoverable: "true"
     profiles:
     - default
-    container name: {{vars.image}}
+    image name: {{vars.image}}
     system overlay: {{vars.overlays}}
 {% if vars.ipmi is defined %}
     ipmi:
@@ -24,7 +50,10 @@ nodes:
 {% endif %}
 {% if vars.kernargs is defined %}
     kernel:
-      args: {{vars.kernargs}}
+      args: 
+{% for arg in vars.kernargs.split() %}
+        - "{{ arg }}"
+{% endfor %}
 {% endif %}
     network devices:
       default:

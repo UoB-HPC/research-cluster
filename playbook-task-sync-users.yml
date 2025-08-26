@@ -6,6 +6,9 @@
     base_id_range: 32768
 
   tasks:
+    - name: Get fresh Kerberos ticket
+      ansible.builtin.shell: "kdestroy && kinit admin <<< {{ipa_password}}"
+
     # See https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/managing_idm_users_groups_hosts_and_access_control_rules/adjusting-id-ranges-manually_managing-users-groups-hosts
     # If we don't do this, ipantsecurityidentifier won't be injected and not even `ipa config-mod --enable-sid --add-sids` won't fix it either.
     - name: Ensure IPA ID Range for the local domain
@@ -74,61 +77,36 @@
         sshpubkey: "{{item.value.publickey}}"
         uid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
         gid: "{{range(base_id, base_id + base_id_range) | random(seed=item.key)}}"
-        homedir: "/home/{{item.key}}"
         state: present
         update_password: on_create
       loop: "{{users | dict2items}}"
 
-    - name: Ensure home directories exist with correct permissions
-      file:
-        path: "/mnt/rds1/home/{{item.key}}"
-        state: directory
-        owner: "{{item.key}}"
-        group: "{{item.key}}"
-        mode: "0700"
-      loop: "{{users | dict2items}}"
-
-    - name: Ensure /etc/skel files exist in users directories without overwriting
-      copy:
-        src: /etc/skel/
-        dest: "/mnt/rds1/home/{{item.key}}/"
-        owner: "{{item.key}}"
-        group: "{{item.key}}"
-        mode: "0644"
-        force: no
-      loop: "{{users | dict2items}}"
-
-    # This allows us to apply group rules in one go, speeding up this playbook a lot!
-    - name: Collect group member lists
-      set_fact:
-        group_memberships:
-          sudo: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'sudo') | map(attribute='key') | list }}"
-          video: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'video') | map(attribute='key') | list }}"
-          render: "{{ users | dict2items | selectattr('value.groups', 'defined') | selectattr('value.groups', 'contains', 'render') | map(attribute='key') | list }}"
-
-    - name: Ensure sudo group members
+    - name: Ensure user sudo rules
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ ipa_password }}"
+        ipaadmin_password: "{{ipa_password}}"
         name: sudo
         action: member
-        user: "{{ group_memberships.sudo }}"
-      when: group_memberships.sudo | length > 0
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.groups is contains("sudo")
 
-    - name: Ensure video group members
+    - name: Ensure user video group
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ ipa_password }}"
+        ipaadmin_password: "{{ipa_password}}"
         name: video
         action: member
-        user: "{{ group_memberships.video }}"
-      when: group_memberships.video | length > 0
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.groups is contains("video")
 
-    - name: Ensure render group members
+    - name: Ensure user render group
       freeipa.ansible_freeipa.ipagroup:
-        ipaadmin_password: "{{ ipa_password }}"
+        ipaadmin_password: "{{ipa_password}}"
         name: render
         action: member
-        user: "{{ group_memberships.render }}"
-      when: group_memberships.render | length > 0
+        user: "{{item.key}}"
+      loop: "{{users | dict2items}}"
+      when: item.value.groups is contains("render")
 
 - name: Force update SSS
   hosts: "mgmt.{{domain}}, login-*.{{domain}}"

@@ -22,6 +22,9 @@ RUN systemctl enable ipa-add-host patch-munge-key munge slurmd && \
 
 RUN mkdir -p /etc/warewulf/
 
+# https://github.com/openhpc/ohpc/issues/2061
+RUN chmod u+w / 
+
 # Warewulf default excludes
 RUN echo "/boot/" > /etc/warewulf/excludes && \
     echo "/usr/share/GeoIP" >> /etc/warewulf/excludes

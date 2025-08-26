@@ -10,9 +10,8 @@
       loop: "{{all_arch}}"
 
     - name: Import COS image
-      ansible.builtin.shell: | # XXX the first import sometime fails (!)
-        wwctl container import "/root/cos.plain.{{item}}.warewulf.tar" "cos_plain.{{item}}" --force --syncuser || \
-        wwctl container import "/root/cos.plain.{{item}}.warewulf.tar" "cos_plain.{{item}}" --force --syncuser
+      ansible.builtin.shell: |
+        wwctl image import "/root/cos.plain.{{item}}.warewulf.tar" "cos_plain.{{item}}" --build --force
       loop: "{{all_arch}}"
       async: 600
       poll: 0

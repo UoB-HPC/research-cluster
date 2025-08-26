@@ -49,10 +49,9 @@ EOF
     dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/$nv_arch/cuda-rhel9.repo
     dnf module enable -y nvidia-driver:open-dkms
     dnf install -y nvidia-driver-cuda
-    #dkms_autoinstaller isn't shipped in latest packages. Use `dkms autoinstall` instead.
-    #ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
-    for kver in $(ls /lib/modules); do
-      dkms autoinstall -k "$kver"
+    # See https://github.com/warewulf/warewulf-node-images/blob/main/examples/rockylinux-9-nvidia/Containerfile
+    for dir in /usr/src/kernels/*; do 
+      dkms autoinstall --kernelver "$(basename $dir)"
     done
     dkms status
     systemctl enable nvidia-persistenced
@@ -84,10 +83,7 @@ gpgcheck=1
 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
 EOF
     dnf install -y amdgpu-dkms
-    #ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
-    for kver in $(ls /lib/modules); do
-      dkms autoinstall -k "$kver"
-    done
+    ls /lib/modules | xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
     dkms status
     dnf install -y libdrm-amdgpu
 
