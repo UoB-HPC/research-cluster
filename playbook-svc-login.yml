@@ -58,21 +58,7 @@
     - role: linux-system-roles.postfix
       postfix_conf: { relayhost: "{{postfix_smtp_relay}}" }
 
-    - role: stackhpc.openhpc
-      ansible_distribution_major_version: Alma9
-      ohpc_openhpc_repos: { "Alma9": [] } # already part of BOS
-      ohpc_default_extra_repos: { "Alma9": [] } # already part of BOS
-      openhpc_enable:
-        control: false # slurmctld
-        runtime: true # slurmd
-        database: false # slurmdbd
-        batch: false # compute node
-      openhpc_slurm_configless: true
-      openhpc_slurm_service_enabled: true
-      openhpc_login_only_nodes: "{{inventory_hostname}}"
-      openhpc_cluster_name: "{{mgmt_cluster_name}}"
-      openhpc_module_system_install: false
-
+    # domain join before slurm as we need the correct SRVs from IPA
     - role: freeipa.ansible_freeipa.ipaclient
       state: present
       ipaclient_domain: "{{domain}}"
@@ -82,6 +68,11 @@
       ipaclient_force_join: yes
 
   post_tasks:
+
+    - name: Setup slurmd
+      ansible.builtin.dnf:
+        name: ["slurm-slurmd-ohpc"]
+
     - name: "Setup HBAC: Allow users login node access"
       freeipa.ansible_freeipa.ipahbacrule:
         ipaadmin_password: "{{ipa_password}}"
@@ -99,11 +90,15 @@
       ansible.builtin.copy:
         src: "{{backup_directory}}/mgmt.{{domain}}/munge.key"
         dest: /etc/munge/munge.key
+        group: munge
+        owner: munge
+        mode: 0400
 
     - name: Reload munge service
       ansible.builtin.systemd_service:
         name: munge
         state: restarted
+        enabled: true
 
     ### Configure autofs ###
 

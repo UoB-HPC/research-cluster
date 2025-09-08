@@ -56,7 +56,7 @@ This section is written against a Fedora host environment, you may need to adjus
 In project root, run 
 
 ```shell
-ansible-galaxy install -r requirements.yml
+ansible-galaxy install -r requirements.yml --force
 ```
 The proceed to build the proxmox vagrant box:
 ```shell

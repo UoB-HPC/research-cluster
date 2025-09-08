@@ -119,15 +119,14 @@
         runtime: true # slurmd
         database: true # slurmdbd
         batch: false # compute node
-      openhpc_slurm_configless: yes
       openhpc_slurmdbd_mysql_password: "{{mgmt_password}}"
       openhpc_slurm_accounting_storage_type: "accounting_storage/slurmdbd"
       openhpc_slurm_service_enabled: true
       openhpc_slurm_control_host: "mgmt.{{domain}}"
+      openhpc_slurm_accounting_storage_client_package: mariadb
       openhpc_cluster_name: "{{domain}}"
-      openhpc_packages: []
-      openhpc_slurm_partitions:
-        - name: dummy # empty partition causes slurm to stall, we'll delete this partition later to make slurm start
+      openhpc_config: # empty partition causes slurm to stall, we'll delete this partition later to make slurm start
+        PartitionName: dummy Nodes=ALL Default=YES
       openhpc_module_system_install: false
 
     - role: freeipa.ansible_freeipa.ipaclient
